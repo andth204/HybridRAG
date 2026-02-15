@@ -1,0 +1,29 @@
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+openai==1.59.3
+langchain-openai==0.2.14
+langchain-core==0.3.28
+langchain-community==0.3.13
+numpy==1.26.4
+faiss-cpu==1.9.0.post1
+rank-bm25==0.2.2
+sentence-transformers==3.3.1
+pyvi==0.1.1
+nltk==3.9.2
+torch==2.9.0 # if only search dont use CPU
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 # if use CUDA and pip on terminal
+# ninja
+# flash-attn --no-build-isolation
+einops
+huggingface_hub[hf_xet]
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.17
+tiktoken==0.8.0
+tqdm==4.67.1
+bs4
+requests
+cachetools
+psycopg2-binary 
+minio 
