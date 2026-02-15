@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "HybridRAG"
+version = "0.1.0"
+description = "Hybrid RAG framework"
+authors = [{ name = "An Duong" }]
+requires-python = ">=3.9"
+
+dependencies = [
+    "pydantic==2.10.3",
+    "pydantic-settings==2.6.1",
+    "python-dotenv==1.0.1",
+    "openai==1.59.3",
+    "langchain-openai==0.2.14",
+    "langchain-core==0.3.28",
+    "langchain-community==0.3.13",
+    "numpy==1.26.4",
+    "sentence-transformers==3.3.1",
+    "pyvi==0.1.1",
+    "nltk==3.9.2",
+    "tqdm==4.67.1",
+    "torch==2.9.0",
+    "huggingface_hub[hf_xet]",
+    "fastapi==0.115.5",
+    "uvicorn[standard]==0.32.1",
+    "python-multipart==0.0.17",
+    "tiktoken==0.8.0",
+    "requests",
+    "cachetools"
+]
+
+[tool.setuptools]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
