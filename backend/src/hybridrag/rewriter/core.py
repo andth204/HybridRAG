@@ -13,7 +13,7 @@ class QueryReflection:
         self._last_rewritten: Optional[str] = None
 
     def _normalize(self, text: str) -> str:
-        return re.sub(r"\s+", " ", text.strip().lower())
+        return re.sub(r"\s+", " ", text.lower())
 
     def _extract_user_queries(self, chat_history: List[Dict[str, str]]) -> List[str]:
         return [msg["content"] for msg in chat_history if msg.get("role") == "user" and msg.get("content")]
