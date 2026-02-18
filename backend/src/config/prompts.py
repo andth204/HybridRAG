@@ -1,24 +1,45 @@
 from typing import Dict
 
+
 QUERY_REFLECTION_PROMPT = """
-    Rewrite the user's latest question as a clear, standalone query using context from recent chat history.
-    # Questions from the past:
-    {query_history}
-    # Current User Question:
-    {current_query}
-    ## Rules:
-    - Replace vague terms (e.g., "it", "that", "as mentioned") with specific details from chat history.
-    - Preserve original intent.
-    - Exclude casual chitchat; focus on the core query.
-    - Keep original language (Vietnamese/English) & Output only the clarified question, do not answer.
-    - Note: If the query history is in the main query and the current question is a chat query (unrelated to admissions counseling), then it must be restructured according to the chat query.
-    ## Example:
-    Questions from the past:
-    User: "tuyển sinh theo những phương thức nào?"
-    User: "Trường có xét tuyển theo học bạ không?"
-    Current User Question: "điểm cntt?"
-    → Rewrited Question: "Điểm ngành công nghệ thông tin như nào?"
-    """
+Rewrite the user's latest question as a clear, standalone query.
+# Questions from the past:
+{query_history}
+# Current User Question:
+{current_query}
+
+## Step 1: Determine inten
+Classify the current question as one of:
+A) Context-dependent (related to admissions discussion in history)
+B) Unrelated new topic (general knowledge / different person / chitchat)
+
+## Step 2: Apply rules
+1. If the question is semantically related to admissions or previously mentioned majors 
+   (even if very short like "cntt?", "ktpm?", "ngành đó?", "học phí?"),
+   THEN:
+   - Use chat history to clarify it.
+   - Expand abbreviations if needed.
+   - Rewrite into a full admissions-related question.
+2. If the question is clearly unrelated to admissions 
+   (e.g., person names, celebrities, slang, unrelated concepts),
+   THEN:
+   - Ignore chat history completely.
+   - Rewrite it as an independent general question.
+3. Do NOT force unrelated questions into the admissions domain.
+4. Preserve original language.
+5. Output ONLY the rewritten standalone question.
+   Do NOT answer it.
+   
+## Examples:
+History:
+User: "Ngành Công nghệ thông tin học bao lâu?"
+Current: "cntt?"
+→ "Ngành Công nghệ thông tin học như thế nào?"
+History:
+User: "Trường có những ngành nào đang tuyển sinh?"
+Current: "tùng sơn??"
+→ "Tùng Sơn là ai?"
+"""
 
 
 ANSWER_GENERATION_RAG_PROMPT = """
@@ -61,7 +82,6 @@ Trường Đại học Sư phạm Kỹ thuật Hưng Yên tuyển sinh theo phư
 
 ANSWER_GENERATION_CHITCHAT_PROMPT = """
 You are a friendly conversational assistant for Hung Yen University of Technology and Education.
-
 ### User message:
 {query}
 
