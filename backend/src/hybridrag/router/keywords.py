@@ -25,7 +25,7 @@ class KeywordRouter:
         normalized_query = normalize_text(query)
         query_words = set(re.findall(r'\b\w+\b', normalized_query))
         best_match_count = 0
-        best_route = "unknown"
+        best_route = "chitchat"
         for route_name, keywords in self.keyword_map.items():
             match_count = len(query_words & keywords)
             if match_count > best_match_count:
