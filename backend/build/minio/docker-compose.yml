@@ -2,13 +2,14 @@
 services:
   minio:
     image: minio/minio:latest
-    container_name: smartchat-minio
+    container_name: utehy-minio
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: ""
     ports:
       - "9000:9000"
-      - "9999:9001"
+      - "9001:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
