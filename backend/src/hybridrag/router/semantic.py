@@ -68,7 +68,7 @@ class SemanticRouter:
             return self.query_cache[query]
 
         if self.faiss_index is None:
-            result = (0.0, "unknown")
+            result = (0.0, "chitchat")
             self.query_cache[query] = result
             return result
 
@@ -89,7 +89,7 @@ class SemanticRouter:
 
     async def guide_with_all_scores(self, query: str) -> List[Tuple[float, str]]:
         if self.faiss_index is None:
-            return [(0.0, "unknown")]
+            return [(0.0, "chitchat")]
         query_embedding = await self._get_cached_or_embed(query)
         query_embedding = np.array([query_embedding], dtype=np.float32)
         faiss.normalize_L2(query_embedding)
