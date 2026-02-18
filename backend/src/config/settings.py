@@ -30,9 +30,9 @@ class Settings(BaseSettings):
     RERANK_TOP_K: int = 3
 
     # Query Rewriting
-    MAX_HISTORY_TOKENS_REWRITE: int = 300
-    TEMPERATURE_REWRITER: float = 0.3
-    K_REWRITE: int = 10
+    MAX_HISTORY_TOKENS_REWRITE: int = 200
+    TEMPERATURE_REWRITER: float = 0.2
+    K_REWRITE: int = 5
 
     # PostgreSQL
     POSTGRES_HOST: str = "localhost"
@@ -64,7 +64,7 @@ class Settings(BaseSettings):
     ROUTER_EMBEDDINGS_DIR: Path = VECTOR_STORE_DIR / "router_embeddings"
 
     class Config:
-        env_file = ".env"
+        env_file = Path(__file__).parent.parent.parent / ".env"
         env_file_encoding = "utf-8"
         extra = "allow"
         case_sensitive = True
