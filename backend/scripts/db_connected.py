@@ -34,20 +34,35 @@ def check_postgres():
     except Exception as e:
         print(f"   ❌ Error: {e}")
 
+from urllib.parse import urlparse
+from minio import Minio
+
 def check_minio():
     print("\n[2] MinIO:")
     try:
+        raw_endpoint = settings.MINIO_ENDPOINT.strip()
+        if raw_endpoint.startswith("http://") or raw_endpoint.startswith("https://"):
+            parsed = urlparse(raw_endpoint)
+            endpoint = parsed.netloc
+            secure = parsed.scheme == "https"
+        else:
+            endpoint = raw_endpoint
+            secure = settings.MINIO_SECURE
         client = Minio(
-            endpoint=settings.MINIO_ENDPOINT,
+            endpoint=endpoint,
             access_key=settings.MINIO_ACCESS_KEY,
             secret_key=settings.MINIO_SECRET_KEY,
-            secure=settings.MINIO_SECURE,
+            secure=secure,
         )
         bucket_names = [b.name for b in client.list_buckets()]
-        print(f"   ✅ Connected | {settings.MINIO_ACCESS_KEY}@{settings.MINIO_ENDPOINT}")
+        print(f"   ✅ Connected | {settings.MINIO_ACCESS_KEY}@{endpoint}")
         print(f"   Buckets: {bucket_names or 'None'}")
-        if settings.MINIO_BUCKET_NAME not in bucket_names:
-            print(f"   ⚠️  Default bucket '{settings.MINIO_BUCKET_NAME}' not found → will be auto-created on first use")
+
+        if settings.MINIO_BUCKET_NAME and settings.MINIO_BUCKET_NAME not in bucket_names:
+            print(
+                f"   ⚠️  Default bucket '{settings.MINIO_BUCKET_NAME}' not found "
+                "→ will be auto-created on first use"
+            )
     except Exception as e:
         print(f"   ❌ Error: {e}")
 
