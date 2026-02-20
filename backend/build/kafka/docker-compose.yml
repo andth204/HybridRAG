@@ -1,0 +1,49 @@
+# docker compose --env-file ../../.env up -d
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: utehy-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    restart: unless-stopped
+    networks: [ utehy-network ]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: utehy-kafka
+    depends_on: [ zookeeper ]
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "kafka:29092", "--list" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [ utehy-network ]
+
+  kafka-setup:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: utehy-kafka-setup
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: >
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ${INDEXING_INPUT_TOPIC} --partitions 1 --replication-factor 1 && kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ${INDEXING_STATUS_TOPIC} --partitions 1 --replication-factor 1 && echo "Topics created/exists"
+    restart: "no"
+    networks: [ utehy-network ]
+
+networks:
+  utehy-network:
+    name: utehy-network
+    driver: bridge
