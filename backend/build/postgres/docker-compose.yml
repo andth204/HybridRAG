@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15
+    image: postgres:16
     container_name: utehy-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -9,8 +9,18 @@ services:
     ports:
       - "5000:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./schema/init.sql:/docker-entrypoint-initdb.d/init.sql
-
+      - pg_data:/var/lib/postgresql/data
+      - ./schema:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks: [ utehy-network ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+networks:
+  utehy-network:
+    name: utehy-network
+    external: true
 volumes:
-  postgres_data:
+  pg_data:
