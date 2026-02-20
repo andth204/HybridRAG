@@ -3,7 +3,7 @@ import pickle
 from pathlib import Path
 from typing import List, Tuple, Optional, Dict
 from .route import Route
-from src.core.ingestion.embedding import OpenAIEmbedder
+from src.hybridrag.ingestion.embedding import OpenAIEmbedder
 import faiss
 from cachetools import TTLCache
 
