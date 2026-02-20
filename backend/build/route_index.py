@@ -9,13 +9,12 @@ from src.config.settings import settings
 async def build_and_save(route, embedder):
     output_dir = settings.ROUTER_EMBEDDINGS_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
-    embeddings_list = await embedder.embed(route.samples)
-    embeddings = [np.array(e, dtype=np.float32) for e in embeddings_list]
+    embeddings = await embedder.embed(route.samples)
     data = {
         "route_name": route.name,
         "embeddings": embeddings,
-        "embedding_dim": embeddings[0].shape[0],
-        "sample_count": len(route.samples),
+        "embedding_dim": embeddings.shape[1],
+        "sample_count": embeddings.shape[0],
     }
     output_file = output_dir / f"{route.name}_embeddings.pkl"
     with open(output_file, "wb") as f:
