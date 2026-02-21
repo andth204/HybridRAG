@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 class Settings(BaseSettings):
-    # -----> OpenAI & LLM <----- 
+    # -----< OpenAI & LLM >----- 
     OPENAI_API_KEY:       str   = ""
     GENERATE_MODEL:       str   = "gpt-4o-mini"
     EMBEDDING_MODEL:      str   = "text-embedding-3-small"
@@ -13,27 +13,27 @@ class Settings(BaseSettings):
     MAX_GEN_MAIN:         int   = 500
     MAX_GEN_CHITCHAT:     int   = 200
 
-    # -----> Reranking <-----
+    # -----< Reranking >-----
     RERANKER_MODEL: str = "jinaai/jina-reranker-v2-base-multilingual"
     USE_RERANKER:  bool = True
 
-    # -----> Chunking <-----
+    # -----< Chunking >-----
     FIXED_CHUNK_SIZE:    int = 1024
     FIXED_CHUNK_OVERLAP: int = 180
     
-    # -----> Retrieval <-----
+    # -----< Retrieval >-----
     VECTOR_SEARCH_K:  int = 7
     ELASTIC_SEARCH_K: int = 7
     RRF_K:            int = 60  
     FUSION_K:         int = 10
     RERANK_TOP_K:     int = 3
 
-    # -----> Query Rewriting <-----
+    # -----< Query Rewriting >-----
     MAX_HISTORY_TOKENS_REWRITE: int = 200
     TEMPERATURE_REWRITER:     float = 0.3
     K_REWRITE:                  int = 5
 
-    # -----> Kafka <-----
+    # -----< Kafka >-----
     KAFKA_BOOTSTRAP_SERVERS:   str = "localhost:9092"
     INDEXING_INPUT_TOPIC:      str = "minio-file-events"
     INDEXING_STATUS_TOPIC:     str = "minio-file-status"
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     INDEXING_BATCH_SIZE:       int = 10
     INDEXING_BATCH_INTERVAL: float = 2.0
 
-    # -----> PostgreSQL <-----
+    # -----< PostgreSQL >-----
     POSTGRES_HOST:     str = "localhost"
     POSTGRES_PORT:     int = 5432
     POSTGRES_DB:       str = "utehy"
@@ -54,11 +54,11 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-    # -----> Index-state table (for idempotent + replace) <-----
+    # -----< Index-state table (for idempotent + replace) >-----
     INDEX_STATE_SCHEMA: str = "public"
     INDEX_STATE_TABLE:  str = "file_index_state"
 
-    # -----> MinIO <-----
+    # -----< MinIO >-----
     MINIO_ENDPOINT:      str = "http://localhost:9000"
     MINIO_ROOT_USER:     str = ""
     MINIO_ROOT_PASSWORD: str = ""
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     MINIO_SECURE:       bool = False
     MINIO_BUCKET_NAME:   str = ""
 
-    # -----> Directories <-----
+    # -----< Directories >-----
     BASE_DIR:              Path = Path(__file__).parent.parent.parent
     DATA_DIR:              Path = BASE_DIR / "data"
     DOCUMENTS_DIR:         Path = DATA_DIR / "samples"
