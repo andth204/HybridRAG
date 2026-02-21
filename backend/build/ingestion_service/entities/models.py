@@ -20,7 +20,6 @@ class Chunk:
     file_id: str
     key: str
     text: str
-    index: int
 
     @property
     def chunk_id(self) -> str:
