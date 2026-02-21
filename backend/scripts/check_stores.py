@@ -1,26 +1,26 @@
 import os, sys, pickle
 from pathlib import Path
 from dotenv import load_dotenv
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 load_dotenv(dotenv_path=ENV_PATH)
-BM25_CACHE_DIR  = os.getenv("BM25_CACHE_DIR",  "./bm25_cache")
-FAISS_CACHE_DIR = os.getenv("FAISS_CACHE_DIR", "./faiss_cache")
-
+BM25_CACHE_DIR  = os.getenv("BM25_CACHE_DIR")
+FAISS_CACHE_DIR = os.getenv("FAISS_CACHE_DIR")
 
 def check_bm25():
-    file = Path(BM25_CACHE_DIR) / "corpus.pkl"
+    file = Path(BM25_CACHE_DIR) / "bm25.pkl"
     if not file.exists():
         print(f"[BM25] Chưa có cache. (path={file})")
         return
-    corpus = pickle.load(open(file, "rb"))
-    print(f"\n[BM25] Tổng: {len(corpus)} chunks")
+    data = pickle.load(open(file, "rb")) or {}
+    meta = data.get("meta", {}) or {}
+    print(f"\n[BM25] Tổng: {len(meta)} chunks (path={file})")
     print("-" * 60)
-    for i, c in enumerate(corpus):
-        print(f"  [{i}] chunk_id : {c['chunk_id']}")
-        print(f"       file_id  : {c['file_id']}")
-        print(f"       key      : {c['key']}")
-        print(f"       text     : {c['text'][:100]}...")
+    for i, (cid, m) in enumerate(list(meta.items())[:50]):
+        print(f"  [{i}] chunk_id : {cid}")
+        print(f"       file_id  : {m.get('file_id')}")
+        print(f"       key      : {m.get('key')}")
+        t = (m.get("text") or "")
+        print(f"       text     : {t[:100]}...")
         print()
 
 def check_faiss():
