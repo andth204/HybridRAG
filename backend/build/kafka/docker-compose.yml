@@ -38,8 +38,9 @@ services:
       kafka:
         condition: service_healthy
     entrypoint: [ "/bin/sh", "-c" ]
-    command: >
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ${INDEXING_INPUT_TOPIC} --partitions 1 --replication-factor 1 && kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ${INDEXING_STATUS_TOPIC} --partitions 1 --replication-factor 1 && echo "Topics created/exists"
+    command:
+      - >-
+        kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic "${INDEXING_INPUT_TOPIC}" --partitions 1 --replication-factor 1 && kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic "${INDEXING_STATUS_TOPIC}" --partitions 1 --replication-factor 1 && echo 'Topics created/exists'
     restart: "no"
     networks: [ utehy-network ]
 
