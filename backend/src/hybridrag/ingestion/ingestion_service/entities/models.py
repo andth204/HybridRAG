@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from enum import Enum
+import hashlib
 
 class EventType(str, Enum):
     FILE_ADDED   = "file_added"
@@ -23,4 +24,4 @@ class Chunk:
 
     @property
     def chunk_id(self) -> str:
-        return f"{self.file_id}__chunk_{self.index}"
+        return f"{self.file_id}__chunk_{hashlib.md5(self.text.encode()).hexdigest()[:8]}"
