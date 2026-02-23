@@ -1,9 +1,9 @@
-import os
 from contextlib import asynccontextmanager
 from io import BytesIO
 from typing import List, Optional, Union
 import aioboto3
 from botocore.config import Config
+from src.config.settings import settings
 
 class AsyncMinioClient:
     def __init__(
@@ -16,9 +16,9 @@ class AsyncMinioClient:
         read_timeout: int = 30,
         max_attempts: int = 3,
     ):
-        self.endpoint_url = endpoint_url or os.getenv("MINIO_ENDPOINT")
-        self.access_key = access_key or os.getenv("MINIO_ACCESS_KEY")
-        self.secret_key = secret_key or os.getenv("MINIO_SECRET_KEY")
+        self.endpoint_url = endpoint_url or settings.MINIO_ENDPOINT
+        self.access_key = access_key or settings.MINIO_ACCESS_KEY
+        self.secret_key = secret_key or settings.MINIO_SECRET_KEY
 
         if not self.endpoint_url or not self.endpoint_url.startswith(("http://", "https://")):
             raise ValueError("MINIO_ENDPOINT phải dạng http(s)://host:port")
@@ -67,4 +67,7 @@ class AsyncMinioClient:
             if isinstance(key, str):
                 await s3.delete_object(Bucket=bucket, Key=key)
             elif isinstance(key, list) and key:
-                await s3.delete_objects(Bucket=bucket, Delete={"Objects": [{"Key": k} for k in key]})
+                await s3.delete_objects(
+                    Bucket=bucket,
+                    Delete={"Objects": [{"Key": k} for k in key]},
+                )
