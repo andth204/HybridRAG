@@ -1,0 +1,24 @@
+# docker compose --env-file ../../../../.env up -d --build
+services:
+  ingestion-service:
+    build:
+      context: ../../../..
+      dockerfile: src/hybridrag/ingestion/ingestion_service/Dockerfile
+    container_name: utehy-ingestion-service
+    working_dir: /app
+    volumes:
+      - ../../../..:/app
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      MINIO_ENDPOINT: http://minio:9000
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      BM25_CACHE_DIR: ${BM25_CACHE_DIR}
+      FAISS_CACHE_DIR: ${FAISS_CACHE_DIR}
+    command: python src/hybridrag/ingestion/processor.py
+    restart: unless-stopped
+    networks: [ utehy-network ]
+networks:
+  utehy-network:
+    name: utehy-network
+    external: true
