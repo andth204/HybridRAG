@@ -9,13 +9,14 @@ services:
     volumes:
       - ../../../..:/app
     environment:
+      PYTHONPATH: /app
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       MINIO_ENDPOINT: http://minio:9000
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       BM25_CACHE_DIR: ${BM25_CACHE_DIR}
       FAISS_CACHE_DIR: ${FAISS_CACHE_DIR}
-    command: python src/hybridrag/ingestion/processor.py
+    command: python src/hybridrag/ingestion/ingestion_service/processor.py
     restart: unless-stopped
     networks: [ utehy-network ]
 networks:
