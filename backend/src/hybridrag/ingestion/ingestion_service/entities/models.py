@@ -21,7 +21,10 @@ class Chunk:
     file_id: str
     key: str
     text: str
+    _chunk_id: Optional[str] = None
 
     @property
     def chunk_id(self) -> str:
+        if self._chunk_id:
+            return self._chunk_id
         return f"{self.file_id}__chunk_{hashlib.md5(self.text.encode()).hexdigest()[:8]}"
