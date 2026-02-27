@@ -6,6 +6,7 @@ from typing import Optional
 import pdfplumber
 from docx import Document
 import csv
+import docx2txt
 
 def _txt(d: BytesIO) -> str:
     return d.read().decode("utf-8", errors="replace")
@@ -35,11 +36,22 @@ def _json_file(d: BytesIO) -> str:
         indent=2,
     )
 
+def _doc(d: BytesIO) -> str:
+    d.seek(0)
+    temp_path = "/tmp/temp_doc_file.doc"
+    with open(temp_path, "wb") as f:
+        f.write(d.read())
+    text = docx2txt.process(temp_path)
+    import os
+    os.remove(temp_path)
+    return text
+    
 _EXT = {
     ".txt": _txt,
     ".md": _txt,
     ".pdf": _pdf,
     ".docx": _docx,
+    ".doc": _doc,
     ".csv": _csv,
     ".json": _json_file,
 }
