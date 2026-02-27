@@ -79,6 +79,9 @@ def _action_label(event_type: EventType) -> str:
         EventType.FILE_UPDATED: "updated",
     }.get(event_type, "added")
 
+def _build_chunk(file_id: str, key: str, text: str, i: int) -> Chunk:
+    return Chunk(file_id=file_id, key=key, text=text, _chunk_id=f"{file_id}__chunk_{i:06d}")
+
 
 class IngestionService(BaseBatchKafkaService):
     def __init__(
@@ -104,14 +107,28 @@ class IngestionService(BaseBatchKafkaService):
             embedding_fn=embedder.embed,
             embedding_dim=embedder.get_dimension(),
             cache_dir=faiss_cache,
+            index_type=getattr(settings, "FAISS_INDEX_TYPE", "hnsw"),
+            hnsw_m=int(getattr(settings, "FAISS_HNSW_M", 32)),
+            hnsw_ef_construction=int(getattr(settings, "FAISS_HNSW_EF_CONSTRUCTION", 200)),
+            hnsw_ef_search=int(getattr(settings, "FAISS_HNSW_EF_SEARCH", 64)),
+            ivf_nlist=int(getattr(settings, "FAISS_IVF_NLIST", 4096)),
+            ivf_nprobe=int(getattr(settings, "FAISS_IVF_NPROBE", 16)),
         )
         self.state = FileStateRepo(pg_dsn, schema=state_schema, table=state_table)
         self.notifier = KafkaNotifier(bootstrap=kafka_bootstrap, topic=status_topic)
+        self._concurrency = max(1, int(getattr(settings, "INDEXING_CONCURRENCY", 8)))
+        self._index_lock: asyncio.Lock | None = None
+        self._sem: asyncio.Semaphore | None = None
+
+    def _ensure_async_primitives(self) -> None:
+        self._index_lock = asyncio.Lock()
+        self._sem = asyncio.Semaphore(self._concurrency)
 
     def process_batch(self, items: list[Any]) -> None:
         asyncio.run(self._process_batch(items))
 
     async def _process_batch(self, items: list[Any]) -> None:
+        self._ensure_async_primitives()
         events: list[MinioEvent] = []
         for item in tqdm(items, desc="Parsing events", unit="msg"):
             raw = item if isinstance(item, dict) else json.loads(item)
@@ -120,10 +137,14 @@ class IngestionService(BaseBatchKafkaService):
 
         if not events:
             return
-        
-        results = []
+
+        async def _guarded(ev: MinioEvent) -> dict:
+            async with self._sem:
+                return await self._handle_with_notify(ev)
+
+        results: list[dict] = []
         with tqdm(total=len(events), desc="Indexing files", unit="file") as pbar:
-            for coro in asyncio.as_completed([self._handle_with_notify(ev) for ev in events]):
+            for coro in asyncio.as_completed([_guarded(ev) for ev in events]):
                 result = await coro
                 results.append(result)
                 pbar.set_postfix(result=result.get("result", "?"), key=result.get("key", ""))
@@ -131,45 +152,50 @@ class IngestionService(BaseBatchKafkaService):
 
         stats: dict[str, int] = {}
         for r in results:
-            key = r.get("result", "failed")
-            stats[key] = stats.get(key, 0) + 1
-        logger.info(f"——> Batch complete — {stats}")
+            k = r.get("result", "failed")
+            stats[k] = stats.get(k, 0) + 1
 
+        logger.info("Batch complete -- %s", stats)
         self.notifier.flush()
 
     async def _handle_with_notify(self, ev: MinioEvent) -> dict:
         action = _action_label(ev.event_type)
         try:
             result = await self._handle(ev)
-            self.notifier.publish(FileProcessMessage(
-                action=action,
-                result=result["result"],
-                bucket=ev.bucket,
-                key=ev.key,
-                message=result["message"],
-                chunks=result.get("chunks"),
-                etag=result.get("etag"),
-                version_id=result.get("version_id"),
-                file_id=result.get("file_id"),
-                reason=result.get("reason"),
-            ))
+            self.notifier.publish(
+                FileProcessMessage(
+                    action=action,
+                    result=result["result"],
+                    bucket=ev.bucket,
+                    key=ev.key,
+                    message=result["message"],
+                    chunks=result.get("chunks"),
+                    etag=result.get("etag"),
+                    version_id=result.get("version_id"),
+                    file_id=result.get("file_id"),
+                    reason=result.get("reason"),
+                )
+            )
             return {**result, "key": ev.key}
         except Exception as e:
-            self.notifier.publish(FileProcessMessage(
-                action=action,
-                result="failed",
-                bucket=ev.bucket,
-                key=ev.key,
-                message=f"{action.upper()} failed",
-                reason=str(e),
-                etag=ev.etag,
-                version_id=ev.version_id,
-            ))
-            return {"result": "failed", "message": f"{action.upper()} failed", "reason": str(e)}
+            logger.exception("[FAILED] key=%s action=%s error=%s", ev.key, action, e)
+            self.notifier.publish(
+                FileProcessMessage(
+                    action=action,
+                    result="failed",
+                    bucket=ev.bucket,
+                    key=ev.key,
+                    message=f"{action.upper()} failed",
+                    reason=str(e),
+                    etag=ev.etag,
+                    version_id=ev.version_id,
+                )
+            )
+            return {"result": "failed", "message": f"{action.upper()} failed", "reason": str(e), "key": ev.key}
 
     async def _handle(self, ev: MinioEvent) -> dict:
         if ev.event_type == EventType.FILE_DELETED:
-            self._purge(ev.key)
+            await self._purge(ev.key)
             self.state.delete(ev.bucket, ev.key)
             return {"result": "deleted", "message": "Deleted file successfully"}
 
@@ -185,19 +211,20 @@ class IngestionService(BaseBatchKafkaService):
                 "file_id": current.file_id,
             }
         if current:
-            self._purge(ev.key)
+            await self._purge(ev.key)
         return await self._index(ev.bucket, ev.key, etag=etag, version_id=version_id)
 
-    def _purge(self, key: str) -> None:
-        self.bm25.delete_by_key(key)
-        self.faiss.delete_by_key(key)
+    async def _purge(self, key: str) -> None:
+        async with self._index_lock:
+            await asyncio.to_thread(self.bm25.delete_by_key, key)
+            await asyncio.to_thread(self.faiss.delete_by_key, key)
 
     @_retry
     async def _resolve_version(self, ev: MinioEvent) -> tuple[Optional[str], Optional[str]]:
         if ev.version_id or ev.etag:
             etag = ev.etag.strip('"') if isinstance(ev.etag, str) else ev.etag
             return etag, ev.version_id
-        
+
         info = await self.minio.info(ev.bucket, ev.key)
         etag = info.get("etag")
         if isinstance(etag, str):
@@ -210,8 +237,10 @@ class IngestionService(BaseBatchKafkaService):
 
     @_retry
     async def _index_stores(self, chunks: list[Chunk]) -> None:
-        self.bm25.add_chunks(chunks)
-        await self.faiss.add_chunks(chunks)
+        await self.faiss.precompute_embeddings(chunks)
+        async with self._index_lock:
+            await asyncio.to_thread(self.bm25.add_chunks, chunks)
+            await self.faiss.add_chunks(chunks)
 
     async def _index(self, bucket: str, key: str, etag: Optional[str], version_id: Optional[str]) -> dict:
         full_text = await self._fetch_text(bucket, key)
@@ -223,19 +252,15 @@ class IngestionService(BaseBatchKafkaService):
                 "etag": etag,
                 "version_id": version_id,
             }
-
         version_tag = version_id or etag or "noversion"
         file_id = _uuid_for(bucket, key, version_tag)
-        chunks = [
-            Chunk(file_id=file_id, key=key, text=text)
-            for i, text in enumerate(self.splitter.split_text(full_text))
-        ]
-        logger.info(f"'{key}' -> {len(chunks)} chunks (version={version_tag})")
+        parts = self.splitter.split_text(full_text)
+        chunks = [_build_chunk(file_id=file_id, key=key, text=text, i=i) for i, text in enumerate(parts)]
+
+        logger.info("'%s' -> %d chunks (version=%s)", key, len(chunks), version_tag)
 
         await self._index_stores(chunks)
-        self.state.upsert(FileState(
-            bucket=bucket, key=key, etag=etag, version_id=version_id, file_id=file_id
-        ))
+        self.state.upsert(FileState(bucket=bucket, key=key, etag=etag, version_id=version_id, file_id=file_id))
         return {
             "result": "success",
             "message": "Indexed file successfully",
@@ -245,10 +270,10 @@ class IngestionService(BaseBatchKafkaService):
             "file_id": file_id,
         }
 
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(name)s %(message)s")
-    print("✅ Service has started.")
+    print("-> Service has started.")
+    
     IngestionService(
         kafka_bootstrap=settings.KAFKA_BOOTSTRAP_SERVERS,
         input_topic=settings.INDEXING_INPUT_TOPIC,
