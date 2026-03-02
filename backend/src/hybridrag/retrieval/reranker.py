@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 from typing import Any, Dict, List
 from src.config.settings import settings
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -11,6 +12,14 @@ _RERANK_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="reranke
 
 
 class Reranker:
+    _init_lock: Lock = Lock()
+    _shared_loaded: bool = False
+    _shared_model_name: str | None = None
+    _shared_tokenizer = None
+    _shared_hf_model = None
+    _shared_torch = None
+    _shared_device: str = "cpu"
+
     def __init__(self, model_name: str | None = None, top_k: int | None = None) -> None:
         self._model_name = model_name or settings.RERANKER_MODEL
         self._top_k = top_k or settings.RERANK_TOP_K
@@ -24,16 +33,33 @@ class Reranker:
     def preload(self) -> None:
         if self._loaded:
             return
+
+        with self.__class__._init_lock:
+            if not self.__class__._shared_loaded:
+                log.info("Reranker: loading model '%s' ...", self._model_name)
+                tokenizer = AutoTokenizer.from_pretrained(self._model_name, trust_remote_code=True)
+                hf_model = AutoModelForSequenceClassification.from_pretrained(
+                    self._model_name,
+                    trust_remote_code=True,
+                )
+                hf_model.eval()
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                hf_model = hf_model.to(device)
+
+                self.__class__._shared_tokenizer = tokenizer
+                self.__class__._shared_hf_model = hf_model
+                self.__class__._shared_torch = torch
+                self.__class__._shared_device = device
+                self.__class__._shared_model_name = self._model_name
+                self.__class__._shared_loaded = True
+                log.info("Reranker: ready on device=%s", device)
+
+        self._tokenizer = self.__class__._shared_tokenizer
+        self._hf_model = self.__class__._shared_hf_model
+        self._torch = self.__class__._shared_torch
+        self._device = self.__class__._shared_device
+        self.model = self.__class__._shared_model_name
         self._loaded = True
-        log.info("Reranker: loading model '%s' ...", self._model_name)
-        self._tokenizer = AutoTokenizer.from_pretrained(self._model_name, trust_remote_code=True)
-        self._hf_model = AutoModelForSequenceClassification.from_pretrained(self._model_name, trust_remote_code=True)
-        self._hf_model.eval()
-        self._device = "cuda" if torch.cuda.is_available() else "cpu"
-        self._hf_model = self._hf_model.to(self._device)
-        self._torch = torch
-        self.model = self._model_name
-        log.info("Reranker: ready on device=%s", self._device)
 
     def _score_pairs(self, query: str, docs: List[str]) -> List[float]:
         torch = self._torch
@@ -68,7 +94,6 @@ class Reranker:
     ) -> List[Dict[str, Any]]:
         if not self.model or not docs:
             return docs[: (top_k or self._top_k)]
-
         loop = asyncio.get_running_loop()
         try:
             return await asyncio.wait_for(
