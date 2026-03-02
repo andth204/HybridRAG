@@ -102,4 +102,4 @@ async def _test(
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s")
-    asyncio.run(_test(query="phương thức tuyển sinh moi nhat", use_reranker=True))
+    asyncio.run(_test(query="phương thức tuyển sinh!", use_reranker=True))
