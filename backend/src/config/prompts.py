@@ -2,43 +2,19 @@ from typing import Dict
 
 
 QUERY_REFLECTION_PROMPT = """
-Rewrite the user's latest question as a clear, standalone query.
-# Questions from the past:
-{query_history}
-# Current User Question:
-{current_query}
+    Rewrite the current user question into exactly one standalone Vietnamese question.
 
-## Step 1: Determine inten
-Classify the current question as one of:
-A) Context-dependent (related to admissions discussion in history)
-B) Unrelated new topic (general knowledge / different person / chitchat)
+    Rules:
+    1) If current question depends on prior admissions context, use history to clarify.
+    2) If current question is already standalone, return it unchanged.
+    3) Do not answer the question.
+    4) Output plain text only (no labels, no markdown, no explanation).
 
-## Step 2: Apply rules
-1. If the question is semantically related to admissions or previously mentioned majors 
-   (even if very short like "cntt?", "ktpm?", "ngành đó?", "học phí?"),
-   THEN:
-   - Use chat history to clarify it.
-   - Expand abbreviations if needed.
-   - Rewrite into a full admissions-related question.
-2. If the question is clearly unrelated to admissions 
-   (e.g., person names, celebrities, slang, unrelated concepts),
-   THEN:
-   - Ignore chat history completely.
-   - Rewrite it as an independent general question.
-3. Do NOT force unrelated questions into the admissions domain.
-4. Preserve original language.
-5. Output ONLY the rewritten standalone question.
-   Do NOT answer it.
-   
-## Examples:
-History:
-User: "Ngành Công nghệ thông tin học bao lâu?"
-Current: "cntt?"
-→ "Ngành Công nghệ thông tin học như thế nào?"
-History:
-User: "Trường có những ngành nào đang tuyển sinh?"
-Current: "tùng sơn??"
-→ "Tùng Sơn là ai?"
+    History:
+    {query_history}
+
+    Current question:
+    {current_query}
 """
 
 
@@ -60,7 +36,7 @@ You are an admissions advisory assistant providing official information about Hu
 
 [ANSWER CONTENT]
 
-[REFERENCES]
+[Thông tin tham chiếu]
 [1]. <Source title / content name exactly as it appears in the CONTEXT>
 [2]. <Source title / content name exactly as it appears in the CONTEXT>
 ...
