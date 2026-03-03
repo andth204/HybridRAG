@@ -84,8 +84,9 @@ Run all commands from `backend/`.
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\activate
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 2) Configure environment
