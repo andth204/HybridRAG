@@ -36,7 +36,7 @@ Production-ready backend for a Hybrid RAG chatbot with Google sign-in, hybrid re
 ## Architecture
 
 <p align="center">
-  <img src="./docs/images/system-architecture.svg" alt="HybridRAG System Architecture" width="100%" />
+  <img src="./docs/images/hybridrag.jpg" alt="HybridRAG System Architecture" width="100%" />
 </p>
 
 **Core flow**
