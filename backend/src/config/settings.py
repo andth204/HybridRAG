@@ -3,6 +3,16 @@ from pathlib import Path
 from typing import Optional
 
 class Settings(BaseSettings):
+    # -----< Auth >-----
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_TOKENINFO_URL: str = "https://oauth2.googleapis.com/tokeninfo"
+    GOOGLE_REQUIRE_VERIFIED_EMAIL: bool = True
+    GOOGLE_ALLOWED_HD: str = ""
+    AUTH_ACCESS_TOKEN_TTL_MINUTES: int = 60
+    AUTH_REFRESH_TOKEN_TTL_DAYS: int = 30
+    AUTH_TOKEN_SCHEMA: str = "public"
+    AUTH_TOKEN_TABLE: str = "auth_tokens"
+
     # -----< OpenAI & LLM >----- 
     OPENAI_API_KEY:       str   = ""
     GENERATE_MODEL:       str   = "gpt-4o-mini"
@@ -90,5 +100,6 @@ class Settings(BaseSettings):
         self.DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
         self.VECTOR_STORE_DIR.mkdir(parents=True, exist_ok=True) 
         self.ROUTER_EMBEDDINGS_DIR.mkdir(parents=True, exist_ok=True)  
+
 
 settings = Settings()
