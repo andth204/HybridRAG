@@ -11,27 +11,31 @@ class Settings(BaseSettings):
     TEMPERATURE_MAIN:     float = 0.6
     TEMPERATURE_CHITCHAT: float = 0.8
     MAX_GEN_MAIN:         int   = 500
-    MAX_GEN_CHITCHAT:     int   = 200
-
-    # -----< Reranking >-----
-    RERANKER_MODEL: str = "jinaai/jina-reranker-v2-base-multilingual"
-    USE_RERANKER:  bool = True
+    MAX_GEN_CHITCHAT:     int   = 100
 
     # -----< Chunking >-----
-    FIXED_CHUNK_SIZE:    int = 1024
-    FIXED_CHUNK_OVERLAP: int = 180
+    FIXED_CHUNK_SIZE:    int = 800
+    FIXED_CHUNK_OVERLAP: int = 100
     
-    # -----< Retrieval >-----
+    # -----< Retrieval/ Reranker >-----
     VECTOR_SEARCH_K:  int = 7
     ELASTIC_SEARCH_K: int = 7
     RRF_K:            int = 60  
-    FUSION_K:         int = 10
+    FUSION_K:         int = 7
+    RERANKER_MODEL:   str = "jinaai/jina-reranker-v2-base-multilingual"
+    USE_RERANKER:    bool = True
     RERANK_TOP_K:     int = 3
 
     # -----< Query Rewriting >-----
-    MAX_HISTORY_TOKENS_REWRITE: int = 200
-    TEMPERATURE_REWRITER:     float = 0.3
-    K_REWRITE:                  int = 5
+    MAX_HISTORY_TOKENS_REWRITE: int = 250
+    TEMPERATURE_REWRITER:     float = 0.2
+    K_REWRITE:                  int = 8
+    REWRITER_MODEL:             str = "gpt-4o-mini"
+    REWRITER_TIMEOUT:         float = 2
+    MAX_REWRITE_OUTPUT_TOKENS:  int = 100
+    MAX_HISTORY_CHARS_REWRITE:  int = 1200
+    REWRITER_CACHE_SIZE:        int = 512
+    REWRITER_CACHE_TTL_SECONDS: int = 86400
 
     # -----< Kafka >-----
     KAFKA_BOOTSTRAP_SERVERS:   str = "localhost:9092"

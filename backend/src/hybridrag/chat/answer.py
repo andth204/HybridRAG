@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 from typing import Any, AsyncIterator, Dict, List, Optional
 from openai import AsyncOpenAI
 from src.config.prompts import get_prompt
@@ -10,11 +11,32 @@ class AnswerGenerator:
         self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
     @staticmethod
-    def _get_source_name(doc: Dict[str, Any], fallback_index: int) -> str:
-        for key in ("title", "source", "key", "document", "doc_id", "id"):
+    def _basename(path_like: str) -> str:
+        cleaned = path_like.strip()
+        if not cleaned:
+            return ""
+        cleaned = cleaned.split("?", 1)[0].split("#", 1)[0]
+        parts = re.split(r"[\\/]+", cleaned)
+        return parts[-1].strip() if parts and parts[-1].strip() else cleaned
+
+    @staticmethod
+    def _get_source_id(doc: Dict[str, Any], fallback_index: int) -> str:
+        for key in ("key", "source", "title", "document", "doc_id", "id"):
             value = doc.get(key)
             if isinstance(value, str) and value.strip():
                 return value.strip()
+        return f"Source-{fallback_index}"
+
+    @staticmethod
+    def _get_source_name(doc: Dict[str, Any], fallback_index: int) -> str:
+        key_value = doc.get("key")
+        if isinstance(key_value, str) and key_value.strip():
+            return AnswerGenerator._basename(key_value)
+
+        for key in ("source", "title", "document", "doc_id", "id"):
+            value = doc.get(key)
+            if isinstance(value, str) and value.strip():
+                return AnswerGenerator._basename(value)
         return f"Source-{fallback_index}"
 
     @staticmethod
@@ -33,21 +55,21 @@ class AnswerGenerator:
         max_chars_per_doc: int = 1200,
     ) -> str:
         lines: List[str] = []
-        used_names: set[str] = set()
+        used_source_ids: set[str] = set()
         kept = 0
-
         for i, doc in enumerate(docs, start=1):
             if kept >= max_docs:
                 break
+            source_id = self._get_source_id(doc, i)
             source_name = self._get_source_name(doc, i)
-            if source_name in used_names:
+            if source_id in used_source_ids:
                 continue
 
             content = self._get_content(doc)
             if not content:
                 continue
 
-            used_names.add(source_name)
+            used_source_ids.add(source_id)
             kept += 1
             content = content[:max_chars_per_doc]
             lines.append(f"[{kept}] {source_name}\n{content}")
@@ -141,9 +163,7 @@ if __name__ == "__main__":
     ) -> None:
         # --- Load searcher once (indexes + reranker) ---
         searcher = HybridSearcher()
-        t_load0 = time.perf_counter()
         searcher.load_indexes()
-        t_load = time.perf_counter() - t_load0
 
         # --- Retrieval (vector + bm25 + fuse + optional rerank) ---
         t0 = time.perf_counter()
