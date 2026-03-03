@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -11,6 +12,7 @@ class FileState:
     etag: Optional[str]
     version_id: Optional[str]
     file_id: str
+    updated_at: Optional[datetime] = None
 
 class FileStateRepo:
     def __init__(self, dsn: str, schema: str = "public", table: str = "file_index_state"):
@@ -40,7 +42,7 @@ class FileStateRepo:
 
     def get(self, bucket: str, key: str) -> Optional[FileState]:
         sql = f"""
-        SELECT bucket, object_key, etag, version_id, file_id
+        SELECT bucket, object_key, etag, version_id, file_id, updated_at
         FROM {self.schema}.{self.table}
         WHERE bucket=%s AND object_key=%s
         """
@@ -56,7 +58,53 @@ class FileStateRepo:
                     etag=row.get("etag"),
                     version_id=row.get("version_id"),
                     file_id=row["file_id"],
+                    updated_at=row.get("updated_at"),
                 )
+
+    def list(
+        self,
+        *,
+        bucket: Optional[str] = None,
+        key_prefix: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[FileState]:
+        where: list[str] = []
+        params: list[object] = []
+        if bucket:
+            where.append("bucket = %s")
+            params.append(bucket)
+        if key_prefix:
+            where.append("object_key LIKE %s")
+            params.append(f"{key_prefix}%")
+
+        where_sql = ""
+        if where:
+            where_sql = "WHERE " + " AND ".join(where)
+
+        sql = f"""
+        SELECT bucket, object_key, etag, version_id, file_id, updated_at
+        FROM {self.schema}.{self.table}
+        {where_sql}
+        ORDER BY updated_at DESC
+        LIMIT %s OFFSET %s
+        """
+        params.extend([limit, offset])
+        with self._conn() as c:
+            with c.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql, tuple(params))
+                rows = cur.fetchall()
+                return [
+                    FileState(
+                        bucket=row["bucket"],
+                        key=row["object_key"],
+                        etag=row.get("etag"),
+                        version_id=row.get("version_id"),
+                        file_id=row["file_id"],
+                        updated_at=row.get("updated_at"),
+                    )
+                    for row in rows
+                ]
 
     def upsert(self, state: FileState) -> None:
         sql = f"""
