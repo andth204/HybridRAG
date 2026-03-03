@@ -34,13 +34,11 @@ def check_bm25(limit: int = 50, text_len: int = 200):
     for i, (chunk_id, m) in enumerate(list(meta.items())[:limit]):
         key = m.get("key")
         file_id = m.get("file_id")
-        idx = m.get("index")
         txt = (m.get("text") or "").replace("\n", " ").strip()
 
         print(f"[{i}] chunk_id: {chunk_id}")
         print(f"    key    : {key}")
         print(f"    file_id : {file_id}")
-        print(f"    index  : {idx}")
         print(f"    text   : {txt[:text_len]}{'...' if len(txt) > text_len else ''}")
         print()
 
@@ -60,18 +58,15 @@ def check_faiss(limit: int = 50, text_len: int = 200):
 
     print(f"\n[FAISS] Tổng: {index.ntotal} vectors / {len(meta_items)} meta (path={meta_file})")
     print("-" * 80)
-
     for i, m in enumerate(meta_items[:limit]):
         chunk_id = m.get("chunk_id")
         key = m.get("key")
         file_id = m.get("file_id")
-        idx = m.get("index")
         txt = (m.get("text") or "").replace("\n", " ").strip()
 
         print(f"[{i}] chunk_id: {chunk_id}")
         print(f"    key    : {key}")
         print(f"    file_id : {file_id}")
-        print(f"    index  : {idx}")
         print(f"    text   : {txt[:text_len]}{'...' if len(txt) > text_len else ''}")
         print()
 
