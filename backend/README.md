@@ -89,6 +89,13 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+API setup (includes GPU reranker dependencies):
+
+```powershell
+pip install -r requirements.api.txt
+pip install -e .
+```
+
 ### 2) Configure environment
 
 ```powershell
