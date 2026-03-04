@@ -38,3 +38,5 @@ app.include_router(files_router)
 @app.get("/health/live", tags=["health"])
 async def health_live() -> dict[str, str]:
     return {"status": "ok"}
+
+# uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
