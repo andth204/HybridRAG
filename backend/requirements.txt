@@ -38,3 +38,4 @@ kafka-python
 pdfplumber
 python-docx
 docx2txt
+tenacity
