@@ -10,7 +10,10 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+    gpus: all
     environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
       PYTHONPATH: /app
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
