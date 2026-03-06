@@ -6,6 +6,8 @@ CREATE TABLE users (
     google_id VARCHAR(255) UNIQUE,
     email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(100),
+    role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('manager', 'user')),
+    is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
