@@ -27,8 +27,8 @@ class FileProcessMessage:
 
 class KafkaNotifier:
     def __init__(self, bootstrap: Optional[str] = None, topic: Optional[str] = None):
-        self.bootstrap = bootstrap or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-        self.topic = topic or os.getenv("INDEXING_STATUS_TOPIC", "minio-file-status")
+        self.bootstrap = bootstrap or os.getenv("KAFKA_BOOTSTRAP_SERVERS")
+        self.topic = topic or os.getenv("INDEXING_STATUS_TOPIC")
         self._p = Producer({"bootstrap.servers": self.bootstrap})
 
     def publish(self, msg: FileProcessMessage) -> None:
