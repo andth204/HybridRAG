@@ -1,6 +1,5 @@
 from __future__ import annotations
 import asyncio
-from dataclasses import asdict
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field
@@ -16,13 +15,14 @@ class UserProfileResponse(BaseModel):
     email: str
     username: str | None
     google_id: str | None
+    role: str
+    is_blocked: bool
     created_at: datetime
     updated_at: datetime
 
 
 class GoogleLoginRequest(BaseModel):
     id_token: str = Field(..., min_length=1)
-
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -42,7 +42,16 @@ class RevokeRequest(BaseModel):
 
 
 def _to_user_profile(user) -> UserProfileResponse:
-    return UserProfileResponse(**asdict(user))
+    return UserProfileResponse(
+        id=user.id,
+        email=user.email,
+        username=user.username,
+        google_id=user.google_id,
+        role=user.role,
+        is_blocked=user.is_blocked,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+    )
 
 
 @router.post("/google", response_model=TokenResponse)
@@ -69,6 +78,11 @@ async def google_login(payload: GoogleLoginRequest) -> TokenResponse:
         email=identity.email,
         username=identity.name,
     )
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account is blocked. Please contact a manager.",
+        )
     tokens = await issue_token_pair(token_repo=token_repo, user=user)
     return TokenResponse(
         access_token=tokens.access_token,
@@ -77,7 +91,6 @@ async def google_login(payload: GoogleLoginRequest) -> TokenResponse:
         expires_in=tokens.expires_in,
         user=_to_user_profile(user),
     )
-
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_access_token(payload: RefreshTokenRequest) -> TokenResponse:
@@ -102,6 +115,11 @@ async def refresh_access_token(payload: RefreshTokenRequest) -> TokenResponse:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found for refresh token",
+        )
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account is blocked. Please contact a manager.",
         )
 
     tokens = await issue_token_pair(token_repo=token_repo, user=user)

@@ -33,12 +33,18 @@ async def keyword_search(
         )
 
     searcher = get_hybrid_searcher()
-    items = await searcher.bm25.search(query=query, top_k=settings.ELASTIC_SEARCH_K)
+    single_mode_limit = max(1, int(getattr(settings, "SINGLE_MODE_SEARCH_MAX_K", 3)))
+    keyword_k = min(int(settings.ELASTIC_SEARCH_K), single_mode_limit)
+    items = await searcher.bm25.search(query=query, top_k=keyword_k)
     return SearchResponse(
         mode="keyword",
         query=query,
         items=items,
-        config={"ELASTIC_SEARCH_K": settings.ELASTIC_SEARCH_K},
+        config={
+            "ELASTIC_SEARCH_K": settings.ELASTIC_SEARCH_K,
+            "SINGLE_MODE_SEARCH_MAX_K": single_mode_limit,
+            "APPLIED_TOP_K": keyword_k,
+        },
     )
 
 
@@ -55,12 +61,18 @@ async def vector_search(
         )
 
     searcher = get_hybrid_searcher()
-    items = await searcher.vector.search(query=query, top_k=settings.VECTOR_SEARCH_K)
+    single_mode_limit = max(1, int(getattr(settings, "SINGLE_MODE_SEARCH_MAX_K", 3)))
+    vector_k = min(int(settings.VECTOR_SEARCH_K), single_mode_limit)
+    items = await searcher.vector.search(query=query, top_k=vector_k)
     return SearchResponse(
         mode="vector",
         query=query,
         items=items,
-        config={"VECTOR_SEARCH_K": settings.VECTOR_SEARCH_K},
+        config={
+            "VECTOR_SEARCH_K": settings.VECTOR_SEARCH_K,
+            "SINGLE_MODE_SEARCH_MAX_K": single_mode_limit,
+            "APPLIED_TOP_K": vector_k,
+        },
     )
 
 

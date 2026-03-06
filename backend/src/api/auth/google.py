@@ -1,4 +1,6 @@
 from __future__ import annotations
+import base64
+import json
 import time
 from dataclasses import dataclass
 import requests
@@ -18,6 +20,25 @@ class GoogleIdentity:
 
 class GoogleAuthError(ValueError):
     pass
+
+
+def _decode_jwt_payload_unverified(id_token: str) -> dict:
+    parts = id_token.split(".")
+    if len(parts) != 3:
+        return {}
+
+    payload_segment = parts[1].strip()
+    if not payload_segment:
+        return {}
+
+    padded = payload_segment + ("=" * (-len(payload_segment) % 4))
+    try:
+        decoded = base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
+        payload = json.loads(decoded)
+    except Exception:
+        return {}
+
+    return payload if isinstance(payload, dict) else {}
 
 
 def _to_bool(value: object) -> bool:
@@ -87,6 +108,11 @@ def verify_google_id_token(id_token: str) -> GoogleIdentity:
             issued_at = None
 
     name = str(payload.get("name", "")).strip() or None
+    # tokeninfo may omit profile claims in some flows; decode the validated token payload as fallback.
+    if not name:
+        jwt_payload = _decode_jwt_payload_unverified(token)
+        if not name:
+            name = str(jwt_payload.get("name", "")).strip() or None
     return GoogleIdentity(
         sub=sub,
         email=email,

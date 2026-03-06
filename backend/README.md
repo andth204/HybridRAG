@@ -20,6 +20,13 @@ Production-ready backend for a Hybrid RAG chatbot with Google sign-in, hybrid re
 ## Highlights
 
 - Google login API with internal access/refresh token lifecycle.
+  - Password auth endpoints are disabled (410) to enforce Google-only sign-in.
+- User roles: `manager` and `user` with manager-only user management endpoints.
+- User management endpoints (`manager` only):
+  - `GET /api/v1/users`
+  - `POST /api/v1/users`
+  - `PATCH /api/v1/users/{user_id}/role`
+  - `DELETE /api/v1/users/{user_id}`
 - User-scoped chat history (`sessions` + `messages`) with ownership checks.
 - Search APIs locked to server-side settings (no client override for top-k/rerank timeout knobs).
 - Full `chat/answer` pipeline and SSE streaming endpoint.
@@ -115,6 +122,16 @@ Update required fields in `.env`:
 - `MINIO_SECRET_KEY`
 - `MINIO_BUCKET_NAME`
 - `KAFKA_BOOTSTRAP_SERVERS` (local default: `localhost:9092`)
+
+Default manager account (auto-seeded on API startup):
+
+- Email: `anduongtrinhhoai@gmail.com`
+- Sign-in method: Google only (use Google account with this email)
+
+### Optional: seed internal password users (admin operations only)
+
+Password user creation script is still available for internal admin workflows,
+but end-user login is Google-only.
 
 ## Run with Docker Compose
 

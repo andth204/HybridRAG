@@ -18,7 +18,7 @@ class Reranker:
     _shared_tokenizer = None
     _shared_hf_model = None
     _shared_torch = None
-    _shared_device: str = "cpu"
+    _shared_device: str = "cuda"
 
     def __init__(self, model_name: str | None = None, top_k: int | None = None) -> None:
         self._model_name = model_name or settings.RERANKER_MODEL
@@ -27,7 +27,7 @@ class Reranker:
         self._tokenizer = None
         self._hf_model = None
         self._torch = None
-        self._device = "cpu"
+        self._device = "cuda"
         self._loaded = False
 
     def preload(self) -> None:
@@ -36,6 +36,12 @@ class Reranker:
 
         with self.__class__._init_lock:
             if not self.__class__._shared_loaded:
+                if not torch.cuda.is_available():
+                    raise RuntimeError(
+                        "Reranker requires CUDA GPU, but CUDA is not available. "
+                        "Install a CUDA-enabled PyTorch build and run on a GPU machine."
+                    )
+
                 log.info("Reranker: loading model '%s' ...", self._model_name)
                 tokenizer = AutoTokenizer.from_pretrained(self._model_name, trust_remote_code=True)
                 hf_model = AutoModelForSequenceClassification.from_pretrained(
@@ -43,7 +49,7 @@ class Reranker:
                     trust_remote_code=True,
                 )
                 hf_model.eval()
-                device = "cuda" if torch.cuda.is_available() else "cpu"
+                device = "cuda"
                 hf_model = hf_model.to(device)
 
                 self.__class__._shared_tokenizer = tokenizer
@@ -101,5 +107,5 @@ class Reranker:
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
-            log.error("Reranker: inference timed out after %.1fs — returning fused results", timeout)
+            log.error("Reranker: inference timed out after %.1fs, returning fused results", timeout)
             return docs[: (top_k or self._top_k)]

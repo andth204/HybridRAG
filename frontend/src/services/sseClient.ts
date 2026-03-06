@@ -1,8 +1,9 @@
 import { fetchEventSource, type EventSourceMessage } from '@microsoft/fetch-event-source'
 
 export interface ChatStreamPayload {
-  message: string
-  sessionId?: string
+  question: string
+  session_id: string
+  search_mode?: string
 }
 
 export interface ChatStreamHandlers {
@@ -21,7 +22,7 @@ function safeParseJson(value: string): unknown {
 }
 
 function handleMessage(event: EventSourceMessage, handlers: ChatStreamHandlers) {
-  if (event.event === 'meta') {
+  if (event.event === 'meta' || event.event === 'start') {
     handlers.onMeta?.(safeParseJson(event.data))
     return
   }
@@ -31,13 +32,41 @@ function handleMessage(event: EventSourceMessage, handlers: ChatStreamHandlers) 
     return
   }
 
+  if (event.event === 'chunk') {
+    const parsed = safeParseJson(event.data)
+    if (typeof parsed === 'string') {
+      handlers.onToken?.(parsed)
+      return
+    }
+    if (typeof parsed === 'object' && parsed) {
+      const payload = parsed as Record<string, unknown>
+      if (typeof payload.content === 'string') {
+        handlers.onToken?.(payload.content)
+        return
+      }
+    }
+    return
+  }
+
   if (event.event === 'done') {
     handlers.onDone?.()
     return
   }
 
   if (event.event === 'error') {
-    handlers.onError?.(event.data || 'Unknown stream error')
+    const parsed = safeParseJson(event.data)
+    if (typeof parsed === 'string') {
+      handlers.onError?.(parsed || 'Unknown stream error')
+      return
+    }
+    if (typeof parsed === 'object' && parsed) {
+      const payload = parsed as Record<string, unknown>
+      if (typeof payload.message === 'string') {
+        handlers.onError?.(payload.message || 'Unknown stream error')
+        return
+      }
+    }
+    handlers.onError?.('Unknown stream error')
   }
 }
 

@@ -13,6 +13,7 @@ Modern Vue 3 frontend for the HybridRAG workspace, including chat, history, docu
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
+- [Environment Variables](#environment-variables)
 - [Quick Start](#quick-start)
 - [Available Scripts](#available-scripts)
 - [Troubleshooting](#troubleshooting)
@@ -67,6 +68,26 @@ Verify local versions:
 node -v
 npm -v
 ```
+
+## Environment Variables
+
+Create `frontend/.env` and configure:
+
+```env
+VITE_API_BASE_URL=/api/v1
+VITE_DEV_API_TARGET=http://localhost:8000
+VITE_DEV_HOST=localhost
+VITE_DEV_PORT=5173
+VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
+```
+
+Notes:
+
+- `VITE_API_BASE_URL=/api/v1` works with Vite dev proxy.
+- `VITE_DEV_API_TARGET` points to backend API host in local development.
+- `VITE_DEV_HOST` + `VITE_DEV_PORT` define your frontend origin (default: `http://localhost:5173`).
+- Frontend login uses Google auth only (`POST /api/v1/auth/google`).
+- `Remember for 30 days` stores session in `localStorage`; unchecked mode stores session per-tab (`sessionStorage`).
 
 ## Quick Start
 
@@ -129,3 +150,27 @@ npm install
 ```bash
 npm cache verify
 ```
+
+### Google sign-in skipped or popup not shown
+
+If Google login does not open or is skipped, verify:
+
+- `VITE_GOOGLE_CLIENT_ID` in `frontend/.env` matches backend `GOOGLE_CLIENT_ID` exactly.
+- Your Google OAuth client has **Authorized JavaScript origins** including your frontend origin (for example `http://localhost:5173`).
+- You restarted the Vite dev server after any `.env` change.
+- The browser is not blocking Google popup/sign-in windows for your frontend origin.
+
+### Google error `origin_mismatch`
+
+Google rejects sign-in when the current frontend origin is not registered in your OAuth Client.
+
+1. Open Google Cloud Console -> `APIs & Services` -> `Credentials`.
+2. Open your OAuth 2.0 Client ID (Web application) that matches `VITE_GOOGLE_CLIENT_ID`.
+3. In `Authorized JavaScript origins`, add your exact frontend origin(s), for example:
+
+```text
+http://localhost:5173
+http://127.0.0.1:5173
+```
+
+4. Save, wait 1-5 minutes for propagation, then restart frontend and try again.

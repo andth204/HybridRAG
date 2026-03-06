@@ -3,7 +3,7 @@ import asyncio
 import json
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -24,6 +24,44 @@ from src.hybridrag.rewriter import query_reflection
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 CHAT_HISTORY_LIMIT = int(getattr(settings, "CHAT_HISTORY_LIMIT", 200))
+SearchMode = Literal["keyword", "semantic", "hybrid"]
+
+
+def _normalize_search_mode(raw_mode: str | None) -> SearchMode:
+    value = (raw_mode or "hybrid").strip().lower()
+    if value in {"hybrid"}:
+        return "hybrid"
+    if value in {"semantic", "vector"}:
+        return "semantic"
+    if value == "keyword":
+        return "keyword"
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="search_mode must be one of: keyword, semantic, hybrid",
+    )
+
+
+async def _retrieve_docs(query: str, search_mode: SearchMode) -> list[dict[str, Any]]:
+    searcher = get_hybrid_searcher()
+    single_mode_limit = max(1, int(getattr(settings, "SINGLE_MODE_SEARCH_MAX_K", 3)))
+    if search_mode == "keyword":
+        return await searcher.bm25.search(
+            query=query,
+            top_k=min(int(settings.ELASTIC_SEARCH_K), single_mode_limit),
+        )
+    if search_mode == "semantic":
+        return await searcher.vector.search(
+            query=query,
+            top_k=min(int(settings.VECTOR_SEARCH_K), single_mode_limit),
+        )
+    return await searcher.search(
+        query=query,
+        vector_k=settings.VECTOR_SEARCH_K,
+        bm25_k=settings.ELASTIC_SEARCH_K,
+        fusion_top_n=settings.FUSION_K,
+        use_reranker=settings.USE_RERANKER,
+        rerank_top_k=settings.RERANK_TOP_K,
+    )
 
 
 class CreateSessionRequest(BaseModel):
@@ -57,6 +95,7 @@ class ChatMessagesListResponse(BaseModel):
 class ChatAnswerRequest(BaseModel):
     session_id: str
     question: str = Field(..., min_length=1, max_length=4000)
+    search_mode: str = Field(default="hybrid", min_length=1, max_length=32)
 
 
 class RenameSessionRequest(BaseModel):
@@ -66,6 +105,7 @@ class RenameSessionRequest(BaseModel):
 class ChatAnswerResponse(BaseModel):
     session_id: str
     question: str
+    search_mode: str
     rewritten_query: str
     route_name: str
     route_score: float
@@ -282,6 +322,7 @@ async def chat_answer(
 ) -> ChatAnswerResponse:
     _assert_openai_key()
     question = payload.question.strip()
+    search_mode = _normalize_search_mode(payload.search_mode)
     if not question:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -313,6 +354,7 @@ async def chat_answer(
             "type": "question",
             "pipeline": "api.chat.answer",
             "history_count_before": len(chat_history),
+            "search_mode": search_mode,
         },
     )
 
@@ -335,16 +377,8 @@ async def chat_answer(
             parts.append(piece)
         answer_text = "".join(parts).strip()
     else:
-        searcher = get_hybrid_searcher()
         search_t0 = time.perf_counter()
-        retrieved_docs = await searcher.search(
-            query=rewritten_query,
-            vector_k=settings.VECTOR_SEARCH_K,
-            bm25_k=settings.ELASTIC_SEARCH_K,
-            fusion_top_n=settings.FUSION_K,
-            use_reranker=settings.USE_RERANKER,
-            rerank_top_k=settings.RERANK_TOP_K,
-        )
+        retrieved_docs = await _retrieve_docs(rewritten_query, search_mode)
         search_ms = (time.perf_counter() - search_t0) * 1000
         generator = get_answer_generator()
         answer_text = (
@@ -361,6 +395,7 @@ async def chat_answer(
         "type": "answer",
         "route": route_name,
         "pipeline": "api.chat.answer",
+        "search_mode": search_mode,
         "rewrite_ms": round(rewrite_ms, 2),
         "route_ms": round(route_ms, 2),
         "generate_ms": round(generate_ms, 2),
@@ -382,6 +417,7 @@ async def chat_answer(
     return ChatAnswerResponse(
         session_id=session.id,
         question=question,
+        search_mode=search_mode,
         rewritten_query=rewritten_query,
         route_name=route_name,
         route_score=route_score,
@@ -398,6 +434,7 @@ async def chat_answer_stream(
 ) -> StreamingResponse:
     _assert_openai_key()
     question = payload.question.strip()
+    search_mode = _normalize_search_mode(payload.search_mode)
     if not question:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -429,6 +466,7 @@ async def chat_answer_stream(
             "type": "question",
             "pipeline": "api.chat.answer.stream",
             "history_count_before": len(chat_history),
+            "search_mode": search_mode,
         },
     )
 
@@ -436,15 +474,7 @@ async def chat_answer_stream(
     route_score, route_name = await _route_query(rewritten_query)
     retrieved_docs: list[dict[str, Any]] = []
     if route_name != "chitchat":
-        searcher = get_hybrid_searcher()
-        retrieved_docs = await searcher.search(
-            query=rewritten_query,
-            vector_k=settings.VECTOR_SEARCH_K,
-            bm25_k=settings.ELASTIC_SEARCH_K,
-            fusion_top_n=settings.FUSION_K,
-            use_reranker=settings.USE_RERANKER,
-            rerank_top_k=settings.RERANK_TOP_K,
-        )
+        retrieved_docs = await _retrieve_docs(rewritten_query, search_mode)
 
     async def event_stream():
         answer_parts: list[str] = []
@@ -457,6 +487,7 @@ async def chat_answer_stream(
                     "rewritten_query": rewritten_query,
                     "route_name": route_name,
                     "route_score": route_score,
+                    "search_mode": search_mode,
                     "retrieved_count": len(retrieved_docs),
                 },
             )
@@ -480,6 +511,7 @@ async def chat_answer_stream(
                 "type": "answer",
                 "route": route_name,
                 "pipeline": "api.chat.answer.stream",
+                "search_mode": search_mode,
                 "n_retrieved": len(retrieved_docs),
                 "sources": sources,
             }
@@ -496,6 +528,7 @@ async def chat_answer_stream(
                 {
                     "session_id": session.id,
                     "route_name": route_name,
+                    "search_mode": search_mode,
                     "answer": answer_text,
                     "sources": sources,
                 },

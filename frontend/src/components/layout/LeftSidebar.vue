@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useUiStore } from '@/stores/ui'
+import { useAuthStore } from '@/stores/auth'
 
-type NavKey = 'chat' | 'documents' | 'users' | 'statistics' | 'history' | 'settings' | 'help'
+type NavKey = 'chat' | 'documents' | 'users' | 'statistics' | 'history' | 'settings'
 
 interface NavItem {
   key: NavKey
@@ -11,27 +12,55 @@ interface NavItem {
 }
 
 const uiStore = useUiStore()
+const authStore = useAuthStore()
 
-const navItems: NavItem[] = [
+const primaryNavItems: NavItem[] = [
   { key: 'chat', label: 'AI Chat', icon: 'chat_bubble_outline' },
   { key: 'documents', label: 'Documents', icon: 'description' },
   { key: 'users', label: 'Users', icon: 'groups' },
   { key: 'statistics', label: 'Statistics', icon: 'analytics' },
   { key: 'history', label: 'History', icon: 'history' },
+]
+
+const secondaryNavItems: NavItem[] = [
   { key: 'settings', label: 'Settings', icon: 'settings' },
-  { key: 'help', label: 'Help', icon: 'help_outline' },
 ]
 
 const activeMainView = computed(() => uiStore.mainView)
 const isCollapsed = computed(() => uiStore.isSidebarCollapsed)
-const mainNavItems = computed(() => navItems.slice(0, 5))
-const auxNavItems = computed(() => navItems.slice(5))
+const isManager = computed(() => authStore.currentUser?.role === 'manager')
+
+function canAccessView(key: NavKey): boolean {
+  if (key === 'documents' || key === 'users' || key === 'statistics') {
+    return isManager.value
+  }
+  return true
+}
+
+const mainNavItems = computed(() => primaryNavItems.filter((item) => canAccessView(item.key)))
+const auxNavItems = computed(() => secondaryNavItems)
 
 function isNavActive(key: NavKey) {
+  if (!canAccessView(key)) {
+    return false
+  }
+  if (key === 'settings') {
+    return uiStore.isSettingsOpen
+  }
   return key === activeMainView.value
 }
 
 function handleNavClick(key: NavKey) {
+  if (!canAccessView(key)) {
+    uiStore.switchMainView('chat')
+    return
+  }
+
+  if (key === 'settings') {
+    uiStore.openSettings('general')
+    return
+  }
+
   if (key === 'history') {
     uiStore.switchMainView('history')
     return
@@ -51,6 +80,10 @@ function handleNavClick(key: NavKey) {
 
   uiStore.switchMainView('chat')
 }
+
+const displayName = computed(() => authStore.currentUser?.fullName ?? 'Guest User')
+const displayEmail = computed(() => authStore.currentUser?.email ?? 'guest@hybridrag.local')
+const displayInitial = computed(() => displayName.value.charAt(0).toUpperCase() || 'G')
 </script>
 
 <template>
@@ -92,13 +125,11 @@ function handleNavClick(key: NavKey) {
         <span v-if="!isCollapsed">{{ item.label }}</span>
       </button>
 
-      <div v-if="!isCollapsed" class="nav-section">Settings &amp; Help</div>
-
       <button
         v-for="item in auxNavItems"
         :key="item.key"
         class="nav-item"
-        :class="{ compact: isCollapsed }"
+        :class="{ active: isNavActive(item.key), compact: isCollapsed }"
         type="button"
         :aria-label="item.label"
         @click="handleNavClick(item.key)"
@@ -109,32 +140,11 @@ function handleNavClick(key: NavKey) {
     </nav>
 
     <div class="sidebar-bottom">
-      <div class="theme-toggle" :class="{ compact: isCollapsed }">
-        <button
-          class="theme-btn"
-          :class="{ active: !uiStore.isDark, compact: isCollapsed }"
-          type="button"
-          @click="uiStore.setTheme('light')"
-        >
-          <span class="material-icons-outlined">light_mode</span>
-          <span v-if="!isCollapsed">Light</span>
-        </button>
-        <button
-          class="theme-btn"
-          :class="{ active: uiStore.isDark, compact: isCollapsed }"
-          type="button"
-          @click="uiStore.setTheme('dark')"
-        >
-          <span class="material-icons-outlined">dark_mode</span>
-          <span v-if="!isCollapsed">Dark</span>
-        </button>
-      </div>
-
       <div class="user-card">
-        <div class="user-av-ph">E</div>
+        <div class="user-av-ph">{{ displayInitial }}</div>
         <div v-if="!isCollapsed" class="user-info">
-          <div class="user-name">Emilie Catlin</div>
-          <div class="user-email">hey@emiliecatlin.com</div>
+          <div class="user-name">{{ displayName }}</div>
+          <div class="user-email">{{ displayEmail }}</div>
         </div>
       </div>
     </div>

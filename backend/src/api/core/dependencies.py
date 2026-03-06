@@ -4,7 +4,7 @@ import uuid
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Annotated, Optional
-from fastapi import HTTPException, Security, status
+from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.api.auth.tokens import AuthTokenRepo
 from src.config.settings import settings
@@ -15,6 +15,7 @@ from src.hybridrag.chat.user import UserRepo
 class AuthContext:
     user_id: str
     access_token: str
+    user_role: str
 
 
 def normalize_uuid_or_400(raw_value: str, field_name: str) -> str:
@@ -72,4 +73,23 @@ async def get_auth_context(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authenticated user not found",
         )
-    return AuthContext(user_id=user_id, access_token=raw_access_token)
+    if user.is_blocked:
+        await asyncio.to_thread(token_repo.revoke, raw_access_token)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account is blocked. Please contact a manager.",
+        )
+    return AuthContext(
+        user_id=user_id,
+        access_token=raw_access_token,
+        user_role=user.role,
+    )
+
+
+async def get_manager_auth_context(auth: Annotated[AuthContext, Depends(get_auth_context)]) -> AuthContext:
+    if auth.user_role != "manager":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Manager role is required for this action",
+        )
+    return auth

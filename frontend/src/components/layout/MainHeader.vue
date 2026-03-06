@@ -19,19 +19,31 @@ const title = computed(() => {
   }
   return 'AI Chat'
 })
+
+function openHistory() {
+  uiStore.switchMainView('history')
+}
+
+function openSettings() {
+  uiStore.openSettings('general')
+}
+
+function openAccount() {
+  uiStore.openSettings('account')
+}
 </script>
 
 <template>
   <header class="main-header">
     <span class="main-header-title">{{ title }}</span>
     <div class="header-actions">
-      <button class="btn-icon-r" type="button">
+      <button class="btn-icon-r" type="button" aria-label="Open history" @click="openHistory">
         <span class="material-icons-outlined">history</span>
       </button>
-      <button class="btn-icon-r" type="button">
+      <button class="btn-icon-r" type="button" aria-label="Open settings" @click="openSettings">
         <span class="material-icons-outlined">settings</span>
       </button>
-      <button class="btn-icon-r account-btn" type="button">
+      <button class="btn-icon-r account-btn" type="button" aria-label="Open account settings" @click="openAccount">
         <span class="material-icons-outlined">account_circle</span>
         <span class="badge"></span>
       </button>

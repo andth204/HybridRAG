@@ -1,135 +1,96 @@
+import axios from 'axios'
 import { defineStore } from 'pinia'
+import {
+  deleteManagedUser,
+  fetchUsersList,
+  patchManagedUserLoginAccess,
+  patchManagedUserRole,
+  type BackendManagedUser,
+} from '@/services/usersApi'
 
-export type UserRole = 'admin' | 'staff' | 'user'
-export type UserStatus = 'active' | 'invited' | 'suspended'
-
+export type UserRole = 'manager' | 'user'
 export type RoleFilter = UserRole | 'all'
-export type StatusFilter = UserStatus | 'all'
 
 export interface ManagedUser {
   id: string
   fullName: string
   email: string
   role: UserRole
-  status: UserStatus
+  isBlocked: boolean
+  sessionCount: number
+  messageCount: number
   createdAt: string
-  lastActiveAt: string
-  totalSessions: number
-  totalMessages: number
-  storageMb: number
+  updatedAt: string
 }
 
-interface CreateUserPayload {
-  fullName: string
-  email: string
-  role: UserRole
+interface UserActionResult {
+  ok: boolean
+  error?: string
 }
 
-function makeUserId(): string {
-  return `usr_${Date.now()}_${Math.floor(Math.random() * 100_000)}`
+interface UpdateRoleResult extends UserActionResult {
+  user?: ManagedUser
 }
 
-function nowIso(): string {
-  return new Date().toISOString()
+interface UpdateLoginAccessResult extends UserActionResult {
+  user?: ManagedUser
 }
 
-function daysAgo(days: number): string {
-  const date = new Date()
-  date.setDate(date.getDate() - days)
-  return date.toISOString()
+function normalizeDisplayName(raw: string): string {
+  const base = raw.trim()
+  if (!base) {
+    return 'HybridRAG User'
+  }
+  return base
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
 }
 
-const seedUsers: ManagedUser[] = [
-  {
-    id: makeUserId(),
-    fullName: 'Emilie Catlin',
-    email: 'emilie@script.ai',
-    role: 'admin',
-    status: 'active',
-    createdAt: daysAgo(320),
-    lastActiveAt: nowIso(),
-    totalSessions: 188,
-    totalMessages: 1221,
-    storageMb: 812,
-  },
-  {
-    id: makeUserId(),
-    fullName: 'Duc Tran',
-    email: 'duc.tran@script.ai',
-    role: 'staff',
-    status: 'active',
-    createdAt: daysAgo(190),
-    lastActiveAt: daysAgo(1),
-    totalSessions: 102,
-    totalMessages: 688,
-    storageMb: 235,
-  },
-  {
-    id: makeUserId(),
-    fullName: 'Minh Nguyen',
-    email: 'minh.nguyen@script.ai',
-    role: 'user',
-    status: 'active',
-    createdAt: daysAgo(82),
-    lastActiveAt: daysAgo(0),
-    totalSessions: 57,
-    totalMessages: 341,
-    storageMb: 126,
-  },
-  {
-    id: makeUserId(),
-    fullName: 'An Le',
-    email: 'an.le@script.ai',
-    role: 'user',
-    status: 'invited',
-    createdAt: daysAgo(6),
-    lastActiveAt: daysAgo(6),
-    totalSessions: 0,
-    totalMessages: 0,
-    storageMb: 0,
-  },
-  {
-    id: makeUserId(),
-    fullName: 'Trang Bui',
-    email: 'trang.bui@script.ai',
-    role: 'staff',
-    status: 'suspended',
-    createdAt: daysAgo(41),
-    lastActiveAt: daysAgo(4),
-    totalSessions: 24,
-    totalMessages: 81,
-    storageMb: 34,
-  },
-  {
-    id: makeUserId(),
-    fullName: 'Huy Pham',
-    email: 'huy.pham@script.ai',
-    role: 'user',
-    status: 'active',
-    createdAt: daysAgo(17),
-    lastActiveAt: daysAgo(2),
-    totalSessions: 16,
-    totalMessages: 66,
-    storageMb: 28,
-  },
-]
+function toManagedUser(user: BackendManagedUser): ManagedUser {
+  const fallbackName = user.email.split('@')[0] || 'HybridRAG User'
+  return {
+    id: user.id,
+    fullName: normalizeDisplayName(user.username || fallbackName),
+    email: user.email.trim().toLowerCase(),
+    role: user.role,
+    isBlocked: Boolean(user.is_blocked),
+    sessionCount: Number(user.session_count || 0),
+    messageCount: Number(user.message_count || 0),
+    createdAt: user.created_at,
+    updatedAt: user.updated_at,
+  }
+}
+
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (!axios.isAxiosError(error)) {
+    return fallback
+  }
+
+  const detail = error.response?.data?.detail
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+
+  const message = error.message?.trim()
+  return message || fallback
+}
 
 export const useUsersStore = defineStore('users', {
   state: () => ({
-    users: seedUsers,
+    users: [] as ManagedUser[],
     searchTerm: '',
     roleFilter: 'all' as RoleFilter,
-    statusFilter: 'all' as StatusFilter,
-    selectedUserId: seedUsers[0]?.id ?? null,
+    selectedUserId: null as string | null,
+    isLoading: false,
+    errorMessage: '',
   }),
   getters: {
     filteredUsers(state): ManagedUser[] {
       const term = state.searchTerm.trim().toLowerCase()
       const filtered = state.users.filter((user) => {
         if (state.roleFilter !== 'all' && user.role !== state.roleFilter) {
-          return false
-        }
-        if (state.statusFilter !== 'all' && user.status !== state.statusFilter) {
           return false
         }
         if (!term) {
@@ -139,7 +100,7 @@ export const useUsersStore = defineStore('users', {
       })
 
       return filtered.sort((a, b) => {
-        return new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime()
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       })
     },
     selectedUser(state): ManagedUser | null {
@@ -151,11 +112,11 @@ export const useUsersStore = defineStore('users', {
     totalUsers(state): number {
       return state.users.length
     },
-    activeUsers(state): number {
-      return state.users.filter((user) => user.status === 'active').length
+    managerUsers(state): number {
+      return state.users.filter((user) => user.role === 'manager').length
     },
-    suspendedUsers(state): number {
-      return state.users.filter((user) => user.status === 'suspended').length
+    standardUsers(state): number {
+      return state.users.filter((user) => user.role === 'user').length
     },
     newUsers7d(state): number {
       const sevenDaysAgo = new Date()
@@ -170,65 +131,86 @@ export const useUsersStore = defineStore('users', {
     setRoleFilter(value: RoleFilter) {
       this.roleFilter = value
     },
-    setStatusFilter(value: StatusFilter) {
-      this.statusFilter = value
-    },
     selectUser(userId: string | null) {
       this.selectedUserId = userId
     },
-    createUser(payload: CreateUserPayload): ManagedUser {
-      let email = payload.email.trim().toLowerCase()
-      let duplicateIndex = 1
-      while (this.users.some((user) => user.email === email)) {
-        duplicateIndex += 1
-        const [namePart, domainPart] = payload.email.trim().toLowerCase().split('@')
-        email = `${namePart}+${duplicateIndex}@${domainPart ?? 'script.ai'}`
+    setUsersFromBackend(items: BackendManagedUser[]) {
+      const mapped = items.map(toManagedUser)
+      const previousSelectedId = this.selectedUserId
+      this.users = mapped
+      if (previousSelectedId && mapped.some((item) => item.id === previousSelectedId)) {
+        this.selectedUserId = previousSelectedId
+        return
       }
-
-      const createdUser: ManagedUser = {
-        id: makeUserId(),
-        fullName: payload.fullName.trim(),
-        email,
-        role: payload.role,
-        status: 'invited',
-        createdAt: nowIso(),
-        lastActiveAt: nowIso(),
-        totalSessions: 0,
-        totalMessages: 0,
-        storageMb: 0,
-      }
-
-      this.users.unshift(createdUser)
-      this.selectedUserId = createdUser.id
-      return createdUser
+      this.selectedUserId = mapped[0]?.id ?? null
     },
-    updateRole(userId: string, role: UserRole): boolean {
-      const target = this.users.find((user) => user.id === userId)
-      if (!target) {
+    async fetchUsers(accessToken: string): Promise<boolean> {
+      this.isLoading = true
+      this.errorMessage = ''
+      try {
+        const items = await fetchUsersList(accessToken)
+        this.setUsersFromBackend(items)
+        return true
+      } catch (error) {
+        this.errorMessage = extractApiErrorMessage(error, 'Failed to load users.')
         return false
+      } finally {
+        this.isLoading = false
       }
-      target.role = role
-      return true
     },
-    toggleUserSuspension(userId: string): boolean {
-      const target = this.users.find((user) => user.id === userId)
-      if (!target) {
-        return false
+    async updateRole(accessToken: string, userId: string, role: UserRole): Promise<UpdateRoleResult> {
+      try {
+        const updated = await patchManagedUserRole(accessToken, userId, role)
+        const mapped = toManagedUser(updated)
+        const index = this.users.findIndex((user) => user.id === userId)
+        if (index >= 0) {
+          this.users.splice(index, 1, mapped)
+        } else {
+          this.users.unshift(mapped)
+        }
+        return { ok: true, user: mapped }
+      } catch (error) {
+        return {
+          ok: false,
+          error: extractApiErrorMessage(error, 'Update role failed.'),
+        }
       }
-      target.status = target.status === 'suspended' ? 'active' : 'suspended'
-      target.lastActiveAt = nowIso()
-      return true
     },
-    removeUser(userId: string): boolean {
-      const index = this.users.findIndex((user) => user.id === userId)
-      if (index < 0) {
-        return false
+    async updateLoginAccess(accessToken: string, userId: string, isBlocked: boolean): Promise<UpdateLoginAccessResult> {
+      try {
+        const updated = await patchManagedUserLoginAccess(accessToken, userId, isBlocked)
+        const mapped = toManagedUser(updated)
+        const index = this.users.findIndex((user) => user.id === userId)
+        if (index >= 0) {
+          this.users.splice(index, 1, mapped)
+        } else {
+          this.users.unshift(mapped)
+        }
+        return { ok: true, user: mapped }
+      } catch (error) {
+        return {
+          ok: false,
+          error: extractApiErrorMessage(error, 'Update login access failed.'),
+        }
       }
-      this.users.splice(index, 1)
-      if (this.selectedUserId === userId) {
-        this.selectedUserId = this.users[0]?.id ?? null
+    },
+    async removeUser(accessToken: string, userId: string): Promise<UserActionResult> {
+      try {
+        await deleteManagedUser(accessToken, userId)
+        const index = this.users.findIndex((user) => user.id === userId)
+        if (index >= 0) {
+          this.users.splice(index, 1)
+        }
+        if (this.selectedUserId === userId) {
+          this.selectedUserId = this.users[0]?.id ?? null
+        }
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          error: extractApiErrorMessage(error, 'Delete user failed.'),
+        }
       }
-      return true
     },
   },
 })

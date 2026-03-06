@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { nextTick } from 'vue'
+import { computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import ChatInput from '@/components/chat/ChatInput.vue'
+import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 
 const chatStore = useChatStore()
+const authStore = useAuthStore()
 const { hasMessages, isStreaming, messages } = storeToRefs(chatStore)
+const userInitial = computed(() => (authStore.currentUser?.fullName?.charAt(0).toUpperCase() || 'U'))
 
 const quickActions = [
   { text: 'Thông tin cơ sở đào tạo', icon: 'school', colorClass: 'action-amber' },
@@ -50,7 +53,8 @@ async function sendQuickMessage(text: string) {
       <div v-else class="messages">
         <div v-for="message in messages" :key="message.id" class="msg" :class="{ user: message.role === 'user' }">
           <div class="msg-av" :class="message.role === 'user' ? 'usr' : 'ai'">
-            {{ message.role === 'user' ? 'E' : 'S' }}
+            <span v-if="message.role === 'user'">{{ userInitial }}</span>
+            <span v-else>S</span>
           </div>
           <div class="msg-bubble">
             {{ message.content || '...' }}

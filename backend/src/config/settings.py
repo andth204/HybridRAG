@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # -----< Retrieval/ Reranker >-----
     VECTOR_SEARCH_K:  int = 7
     ELASTIC_SEARCH_K: int = 7
+    SINGLE_MODE_SEARCH_MAX_K: int = 3
     RRF_K:            int = 60  
     FUSION_K:         int = 7
     RERANKER_MODEL:   str = "jinaai/jina-reranker-v2-base-multilingual"
