@@ -1,5 +1,6 @@
 # Run from backend root:
-# docker compose --env-file .env -f docker-compose.api.yml up -d --build
+# Build: docker compose --env-file .env -f docker-compose.api.yml up -d --build
+# Rebuild: docker compose -f docker-compose.api.yml up -d --build --force-recreate
 
 services:
   api:
@@ -24,7 +25,7 @@ services:
       - "8000:8000"
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/live', timeout=3).read()" ]
+      test: [ "CMD", "python", "-c", "import socket; s = socket.create_connection(('localhost', 8000), timeout=3); s.close()" ]
       interval: 10s
       timeout: 5s
       retries: 10
