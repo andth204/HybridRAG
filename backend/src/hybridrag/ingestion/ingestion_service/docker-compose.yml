@@ -1,4 +1,5 @@
 # docker compose --env-file ../../../../.env up -d --build
+# rebuild: docker compose --env-file ../../../../.env up -d --force-recreate
 services:
   ingestion-service:
     build:
