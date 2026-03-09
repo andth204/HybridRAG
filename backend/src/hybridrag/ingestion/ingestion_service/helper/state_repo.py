@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -92,6 +93,44 @@ class FileStateRepo:
         params.extend([limit, offset])
         with self._conn() as c:
             with c.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql, tuple(params))
+                rows = cur.fetchall()
+                return [
+                    FileState(
+                        bucket=row["bucket"],
+                        key=row["object_key"],
+                        etag=row.get("etag"),
+                        version_id=row.get("version_id"),
+                        file_id=row["file_id"],
+                        updated_at=row.get("updated_at"),
+                    )
+                    for row in rows
+                ]
+
+    def find_by_basename(
+        self,
+        *,
+        bucket: str,
+        key_prefix: Optional[str] = None,
+        basename: str,
+        limit: int = 10,
+    ) -> list[FileState]:
+        where = ["bucket=%s", "regexp_replace(object_key, '^.*/', '') = %s"]
+        params: list[object] = [bucket, basename]
+        if key_prefix:
+            where.append("object_key LIKE %s")
+            params.append(f"{key_prefix}%")
+
+        sql = f"""
+        SELECT bucket, object_key, etag, version_id, file_id, updated_at
+        FROM {self.schema}.{self.table}
+        WHERE {" AND ".join(where)}
+        ORDER BY updated_at DESC
+        LIMIT %s
+        """
+        with self._conn() as c:
+            with c.cursor(cursor_factory=RealDictCursor) as cur:
+                params.append(limit)
                 cur.execute(sql, tuple(params))
                 rows = cur.fetchall()
                 return [
