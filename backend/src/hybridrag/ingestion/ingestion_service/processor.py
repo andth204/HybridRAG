@@ -33,6 +33,8 @@ class MinioEvent:
     key: str
     etag: Optional[str] = None
     version_id: Optional[str] = None
+    force: bool = False
+    requested_action: Optional[str] = None
 
 def _uuid_for(bucket: str, key: str, etag_or_version: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"{bucket}/{key}:{etag_or_version}"))
@@ -69,6 +71,35 @@ def _parse_minio_event(raw: dict) -> Optional[MinioEvent]:
         if isinstance(etag, str):
             etag = etag.strip('"')
         return MinioEvent(event_type=event_type, bucket=bucket, key=key, etag=etag, version_id=version_id)
+    except Exception:
+        return None
+
+
+def _parse_manual_event(raw: dict) -> Optional[MinioEvent]:
+    try:
+        event_type_raw = str(raw.get("event_type") or "").strip()
+        bucket = raw.get("bucket")
+        key = _decode_minio_key(raw.get("key"))
+        if not event_type_raw or not bucket or not key:
+            return None
+
+        event_type = EventType(event_type_raw)
+        etag = raw.get("etag")
+        version_id = raw.get("version_id") or raw.get("versionId")
+        requested_action = raw.get("requested_action")
+        if isinstance(etag, str):
+            etag = etag.strip('"')
+        if not isinstance(requested_action, str) or not requested_action.strip():
+            requested_action = None
+        return MinioEvent(
+            event_type=event_type,
+            bucket=bucket,
+            key=key,
+            etag=etag,
+            version_id=version_id,
+            force=bool(raw.get("force")),
+            requested_action=requested_action,
+        )
     except Exception:
         return None
 
@@ -132,6 +163,9 @@ class IngestionService(BaseBatchKafkaService):
         events: list[MinioEvent] = []
         for item in tqdm(items, desc="Parsing events", unit="msg"):
             raw = item if isinstance(item, dict) else json.loads(item)
+            if isinstance(raw, dict) and (event := _parse_manual_event(raw)):
+                events.append(event)
+                continue
             if "Records" in raw and (event := _parse_minio_event(raw)):
                 events.append(event)
 
@@ -159,9 +193,10 @@ class IngestionService(BaseBatchKafkaService):
         self.notifier.flush()
 
     async def _handle_with_notify(self, ev: MinioEvent) -> dict:
-        action = _action_label(ev.event_type)
+        default_action = ev.requested_action or _action_label(ev.event_type)
         try:
             result = await self._handle(ev)
+            action = str(result.get("action") or default_action)
             self.notifier.publish(
                 FileProcessMessage(
                     action=action,
@@ -178,33 +213,38 @@ class IngestionService(BaseBatchKafkaService):
             )
             return {**result, "key": ev.key}
         except Exception as e:
-            logger.exception("[FAILED] key=%s action=%s error=%s", ev.key, action, e)
+            logger.exception("[FAILED] key=%s action=%s error=%s", ev.key, default_action, e)
             self.notifier.publish(
                 FileProcessMessage(
-                    action=action,
+                    action=default_action,
                     result="failed",
                     bucket=ev.bucket,
                     key=ev.key,
-                    message=f"{action.upper()} failed",
+                    message=f"{default_action.upper()} failed",
                     reason=str(e),
                     etag=ev.etag,
                     version_id=ev.version_id,
                 )
             )
-            return {"result": "failed", "message": f"{action.upper()} failed", "reason": str(e), "key": ev.key}
+            return {"result": "failed", "message": f"{default_action.upper()} failed", "reason": str(e), "key": ev.key}
 
     async def _handle(self, ev: MinioEvent) -> dict:
         if ev.event_type == EventType.FILE_DELETED:
             await self._purge(ev.key)
             self.state.delete(ev.bucket, ev.key)
-            return {"result": "deleted", "message": "Deleted file successfully"}
+            return {
+                "action": "deleted",
+                "result": "deleted",
+                "message": f'Deleted "{ev.key}" successfully.',
+            }
 
         etag, version_id = await self._resolve_version(ev)
         current = self.state.get(ev.bucket, ev.key)
-        if current and current.etag == etag and current.version_id == version_id:
+        if current and current.etag == etag and current.version_id == version_id and not ev.force:
             return {
+                "action": "updated",
                 "result": "duplicated",
-                "message": "Duplicate file (same content/version), skipped indexing",
+                "message": f'Duplicate file "{ev.key}" detected.',
                 "reason": "same_version",
                 "etag": etag,
                 "version_id": version_id,
@@ -212,7 +252,20 @@ class IngestionService(BaseBatchKafkaService):
             }
         if current:
             await self._purge(ev.key)
-        return await self._index(ev.bucket, ev.key, etag=etag, version_id=version_id)
+            result = await self._index(ev.bucket, ev.key, etag=etag, version_id=version_id)
+            if result.get("result") == "success":
+                if ev.requested_action == "reindexed":
+                    result["message"] = f'Re-indexed "{ev.key}" successfully.'
+                else:
+                    result["message"] = f'Updated "{ev.key}" successfully.'
+            return {**result, "action": ev.requested_action or "updated"}
+
+        result = await self._index(ev.bucket, ev.key, etag=etag, version_id=version_id)
+        if result.get("result") == "success" and ev.requested_action == "reindexed":
+            result["message"] = f'Re-indexed "{ev.key}" successfully.'
+        if ev.requested_action:
+            return {**result, "action": ev.requested_action}
+        return result
 
     async def _purge(self, key: str) -> None:
         async with self._index_lock:
@@ -247,7 +300,7 @@ class IngestionService(BaseBatchKafkaService):
         if not full_text:
             return {
                 "result": "skipped",
-                "message": "Skipped (empty/unsupported file)",
+                "message": f'Skipped "{key}" (empty or unsupported file).',
                 "reason": "empty_or_unsupported",
                 "etag": etag,
                 "version_id": version_id,
@@ -263,7 +316,7 @@ class IngestionService(BaseBatchKafkaService):
         self.state.upsert(FileState(bucket=bucket, key=key, etag=etag, version_id=version_id, file_id=file_id))
         return {
             "result": "success",
-            "message": "Indexed file successfully",
+            "message": f'Indexed "{key}" successfully.',
             "chunks": len(chunks),
             "etag": etag,
             "version_id": version_id,
