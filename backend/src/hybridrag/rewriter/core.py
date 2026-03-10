@@ -285,12 +285,12 @@ query_reflection = QueryReflection()
 
 if __name__ == "__main__":
     async def _main() -> None:
-        q = "cntt??"
+        q = "Điểm chuẩn cntt?"
         chat_history = [
-            {"role": "user", "content": "Truong co nhung nganh nao dang tuyen sinh?"},
-            {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
-            {"role": "user", "content": "Minh quan tam den CNTT."},
-            {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
+            # {"role": "user", "content": "Phương thức & điều kiện xét tuyển??"},
+            # {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
+            # {"role": "user", "content": "Minh quan tam den CNTT."},
+            # {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
         ]
 
         rewritten_query = await query_reflection.reflect(q, chat_history)

@@ -1,9 +1,7 @@
 ﻿from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -28,8 +26,6 @@ class User:
 class UserRepo:
     def __init__(self, dsn: str):
         self.dsn = dsn
-        self._ensure_role_column()
-        self._ensure_is_blocked_column()
 
     def _conn(self):
         return psycopg2.connect(self.dsn)
@@ -49,39 +45,50 @@ class UserRepo:
             updated_at=row["updated_at"],
         )
 
-    def _ensure_role_column(self) -> None:
+    def ensure_schema(self) -> None:
         with self._conn() as conn:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    ALTER TABLE users
-                    ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user'
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND table_schema = ANY(current_schemas(FALSE))
+                      AND column_name IN ('role', 'is_blocked')
                     """
                 )
-                cur.execute(
-                    """
-                    UPDATE users
-                    SET role = 'user'
-                    WHERE role IS NULL
-                    """
-                )
-                cur.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check")
-                cur.execute(
-                    """
-                    ALTER TABLE users
-                    ADD CONSTRAINT users_role_check
-                    CHECK (role IN ('manager', 'user'))
-                    """
-                )
+                available_columns = {str(row["column_name"]) for row in cur.fetchall()}
 
-    def _ensure_is_blocked_column(self) -> None:
-        sql = """
-        ALTER TABLE users
-        ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE
-        """
-        with self._conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute(sql)
+                if not available_columns:
+                    cur.execute(
+                        """
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM information_schema.tables
+                            WHERE table_name = 'users'
+                              AND table_schema = ANY(current_schemas(FALSE))
+                        ) AS has_users_table
+                        """
+                    )
+                    row = cur.fetchone()
+                    if not row or not bool(row["has_users_table"]):
+                        raise RuntimeError("Required table 'users' is missing from the current schema search path")
+
+                if "role" not in available_columns:
+                    cur.execute(
+                        """
+                        ALTER TABLE users
+                        ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user'
+                        """
+                    )
+
+                if "is_blocked" not in available_columns:
+                    cur.execute(
+                        """
+                        ALTER TABLE users
+                        ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE
+                        """
+                    )
 
     def get_by_id(self, user_id: str) -> Optional[User]:
         sql = """
@@ -105,6 +112,28 @@ class UserRepo:
                 JOIN chat_sessions cs ON cs.id = cm.session_id
                 WHERE cs.user_id = u.id
             ), 0) AS message_count
+        FROM users u
+        WHERE u.id = %s
+        """
+        with self._conn() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql, (user_id,))
+                row = cur.fetchone()
+                return self._row_to_user(row) if row else None
+
+    def get_by_id_basic(self, user_id: str) -> Optional[User]:
+        sql = """
+        SELECT
+            u.id,
+            u.google_id,
+            u.email,
+            u.username,
+            u.role,
+            u.is_blocked,
+            u.created_at,
+            u.updated_at,
+            0::BIGINT AS session_count,
+            0::BIGINT AS message_count
         FROM users u
         WHERE u.id = %s
         """

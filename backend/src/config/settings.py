@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     MAX_GEN_CHITCHAT:     int   = 100
 
     # -----< Chunking >-----
-    FIXED_CHUNK_SIZE:    int = 800
-    FIXED_CHUNK_OVERLAP: int = 100
+    FIXED_CHUNK_SIZE:    int = 1200
+    FIXED_CHUNK_OVERLAP: int = 180
     
     # -----< Retrieval/ Reranker >-----
     VECTOR_SEARCH_K:  int = 7

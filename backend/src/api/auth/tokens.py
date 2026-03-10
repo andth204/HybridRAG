@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extras import Json, RealDictCursor
 
 
@@ -24,7 +25,6 @@ class AuthTokenRepo:
         self.dsn = dsn
         self.schema = schema
         self.table = table
-        self._ensure_table()
 
     def _conn(self):
         return psycopg2.connect(self.dsn)
@@ -45,23 +45,54 @@ class AuthTokenRepo:
             metadata=row.get("metadata"),
         )
 
-    def _ensure_table(self) -> None:
-        sql = f"""
-        CREATE TABLE IF NOT EXISTS {self.schema}.{self.table} (
-            token_hash TEXT PRIMARY KEY,
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            token_type VARCHAR(16) NOT NULL CHECK (token_type IN ('access', 'refresh')),
-            expires_at TIMESTAMPTZ NOT NULL,
-            revoked BOOLEAN NOT NULL DEFAULT FALSE,
-            metadata JSONB,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS idx_{self.table}_user_id ON {self.schema}.{self.table}(user_id);
-        CREATE INDEX IF NOT EXISTS idx_{self.table}_expires_at ON {self.schema}.{self.table}(expires_at);
-        """
+    def ensure_schema(self) -> None:
+        qualified_table_name = f"{self.schema}.{self.table}"
+        user_index_name = f"idx_{self.table}_user_id"
+        expires_index_name = f"idx_{self.table}_expires_at"
+        qualified_user_index_name = f"{self.schema}.{user_index_name}"
+        qualified_expires_index_name = f"{self.schema}.{expires_index_name}"
+        table_identifier = sql.Identifier(self.schema, self.table)
+
         with self._conn() as conn:
             with conn.cursor() as cur:
-                cur.execute(sql)
+                cur.execute("SELECT to_regclass(%s)", (qualified_table_name,))
+                table_exists = cur.fetchone()[0] is not None
+                if not table_exists:
+                    cur.execute(
+                        sql.SQL(
+                            """
+                            CREATE TABLE {} (
+                                token_hash TEXT PRIMARY KEY,
+                                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                                token_type VARCHAR(16) NOT NULL CHECK (token_type IN ('access', 'refresh')),
+                                expires_at TIMESTAMPTZ NOT NULL,
+                                revoked BOOLEAN NOT NULL DEFAULT FALSE,
+                                metadata JSONB,
+                                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                            )
+                            """
+                        ).format(table_identifier)
+                    )
+
+                cur.execute("SELECT to_regclass(%s)", (qualified_user_index_name,))
+                user_index_exists = cur.fetchone()[0] is not None
+                if not user_index_exists:
+                    cur.execute(
+                        sql.SQL("CREATE INDEX {} ON {}(user_id)").format(
+                            sql.Identifier(user_index_name),
+                            table_identifier,
+                        )
+                    )
+
+                cur.execute("SELECT to_regclass(%s)", (qualified_expires_index_name,))
+                expires_index_exists = cur.fetchone()[0] is not None
+                if not expires_index_exists:
+                    cur.execute(
+                        sql.SQL("CREATE INDEX {} ON {}(expires_at)").format(
+                            sql.Identifier(expires_index_name),
+                            table_identifier,
+                        )
+                    )
 
     def issue(
         self,

@@ -24,35 +24,27 @@ from src.hybridrag.rewriter import query_reflection
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 CHAT_HISTORY_LIMIT = int(getattr(settings, "CHAT_HISTORY_LIMIT", 200))
-SearchMode = Literal["keyword", "semantic", "hybrid"]
+SearchMode = Literal["hybrid"]
+UNTITLED_SESSION_TITLE = "Untitled conversation"
+SESSION_TITLE_MAX_LENGTH = 120
 
 
 def _normalize_search_mode(raw_mode: str | None) -> SearchMode:
     value = (raw_mode or "hybrid").strip().lower()
-    if value in {"hybrid"}:
+    if value == "hybrid":
         return "hybrid"
-    if value in {"semantic", "vector"}:
-        return "semantic"
-    if value == "keyword":
-        return "keyword"
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail="search_mode must be one of: keyword, semantic, hybrid",
+        detail="Only search_mode='hybrid' is supported for answer endpoints",
     )
 
 
 async def _retrieve_docs(query: str, search_mode: SearchMode) -> list[dict[str, Any]]:
     searcher = get_hybrid_searcher()
-    single_mode_limit = max(1, int(getattr(settings, "SINGLE_MODE_SEARCH_MAX_K", 3)))
-    if search_mode == "keyword":
-        return await searcher.bm25.search(
-            query=query,
-            top_k=min(int(settings.ELASTIC_SEARCH_K), single_mode_limit),
-        )
-    if search_mode == "semantic":
-        return await searcher.vector.search(
-            query=query,
-            top_k=min(int(settings.VECTOR_SEARCH_K), single_mode_limit),
+    if search_mode != "hybrid":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only search_mode='hybrid' is supported for answer endpoints",
         )
     return await searcher.search(
         query=query,
@@ -93,9 +85,9 @@ class ChatMessagesListResponse(BaseModel):
 
 
 class ChatAnswerRequest(BaseModel):
-    session_id: str
+    session_id: str | None = None
     question: str = Field(..., min_length=1, max_length=4000)
-    search_mode: str = Field(default="hybrid", min_length=1, max_length=32)
+    search_mode: SearchMode = "hybrid"
 
 
 class RenameSessionRequest(BaseModel):
@@ -182,6 +174,57 @@ def _assert_openai_key() -> None:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="OPENAI_API_KEY is empty",
         )
+
+
+def _build_session_title_from_question(question: str, max_length: int = SESSION_TITLE_MAX_LENGTH) -> str:
+    compact = " ".join(question.strip().split())
+    if not compact:
+        return UNTITLED_SESSION_TITLE
+    if len(compact) <= max_length:
+        return compact
+    suffix = "..."
+    cut = max(1, max_length - len(suffix))
+    return f"{compact[:cut].rstrip()}{suffix}"
+
+
+async def _ensure_session_title_from_first_question(
+    *,
+    session_repo: ChatSessionRepo,
+    session: ChatSession,
+    user_id: str,
+    question: str,
+) -> None:
+    existing_title = (session.title or "").strip()
+    if existing_title:
+        return
+    title = _build_session_title_from_question(question)
+    await asyncio.to_thread(session_repo.rename, session.id, title, user_id)
+
+
+async def _resolve_answer_session(
+    *,
+    session_repo: ChatSessionRepo,
+    user_id: str,
+    raw_session_id: str | None,
+    question: str,
+) -> ChatSession:
+    normalized_session_id = (raw_session_id or "").strip()
+    if not normalized_session_id:
+        title = _build_session_title_from_question(question)
+        return await asyncio.to_thread(session_repo.create, user_id, title)
+
+    session = await _get_owned_session_or_404(
+        session_repo=session_repo,
+        user_id=user_id,
+        raw_session_id=normalized_session_id,
+    )
+    await _ensure_session_title_from_first_question(
+        session_repo=session_repo,
+        session=session,
+        user_id=user_id,
+        question=question,
+    )
+    return session
 
 
 @router.post("/sessions", response_model=ChatSessionResponse, status_code=status.HTTP_201_CREATED)
@@ -331,10 +374,11 @@ async def chat_answer(
 
     session_repo = ChatSessionRepo(settings.DATABASE_URL)
     message_repo = ChatMessageRepo(settings.DATABASE_URL)
-    session = await _get_owned_session_or_404(
+    session = await _resolve_answer_session(
         session_repo=session_repo,
         user_id=auth.user_id,
         raw_session_id=payload.session_id,
+        question=question,
     )
 
     stored_messages = await asyncio.to_thread(
@@ -443,44 +487,57 @@ async def chat_answer_stream(
 
     session_repo = ChatSessionRepo(settings.DATABASE_URL)
     message_repo = ChatMessageRepo(settings.DATABASE_URL)
-    session = await _get_owned_session_or_404(
+    session = await _resolve_answer_session(
         session_repo=session_repo,
         user_id=auth.user_id,
         raw_session_id=payload.session_id,
+        question=question,
     )
-
-    stored_messages = await asyncio.to_thread(
-        message_repo.load_history,
-        session.id,
-        limit=CHAT_HISTORY_LIMIT,
-        offset=0,
-        ascending=True,
-    )
-    chat_history = _to_rewriter_history(stored_messages)
-    await asyncio.to_thread(
-        message_repo.create,
-        session.id,
-        "user",
-        question,
-        metadata={
-            "type": "question",
-            "pipeline": "api.chat.answer.stream",
-            "history_count_before": len(chat_history),
-            "search_mode": search_mode,
-        },
-    )
-
-    rewritten_query = await query_reflection.reflect(question, chat_history)
-    route_score, route_name = await _route_query(rewritten_query)
-    retrieved_docs: list[dict[str, Any]] = []
-    if route_name != "chitchat":
-        retrieved_docs = await _retrieve_docs(rewritten_query, search_mode)
 
     async def event_stream():
         answer_parts: list[str] = []
+        rewritten_query = question
+        route_score = 0.0
+        route_name = "pending"
+        retrieved_docs: list[dict[str, Any]] = []
         try:
             yield _sse(
                 "start",
+                {
+                    "session_id": session.id,
+                    "question": question,
+                    "search_mode": search_mode,
+                },
+            )
+
+            stored_messages = await asyncio.to_thread(
+                message_repo.load_history,
+                session.id,
+                limit=CHAT_HISTORY_LIMIT,
+                offset=0,
+                ascending=True,
+            )
+            chat_history = _to_rewriter_history(stored_messages)
+            await asyncio.to_thread(
+                message_repo.create,
+                session.id,
+                "user",
+                question,
+                metadata={
+                    "type": "question",
+                    "pipeline": "api.chat.answer.stream",
+                    "history_count_before": len(chat_history),
+                    "search_mode": search_mode,
+                },
+            )
+
+            rewritten_query = await query_reflection.reflect(question, chat_history)
+            route_score, route_name = await _route_query(rewritten_query)
+            if route_name != "chitchat":
+                retrieved_docs = await _retrieve_docs(rewritten_query, search_mode)
+
+            yield _sse(
+                "meta",
                 {
                     "session_id": session.id,
                     "question": question,

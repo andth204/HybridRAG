@@ -41,6 +41,11 @@ def get_auth_token_repo() -> AuthTokenRepo:
         table=settings.AUTH_TOKEN_TABLE,
     )
 
+
+def initialize_auth_storage() -> None:
+    get_user_repo().ensure_schema()
+    get_auth_token_repo().ensure_schema()
+
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -67,7 +72,7 @@ async def get_auth_context(
 
     user_id = normalize_uuid_or_400(token_record.user_id, "user_id")
     user_repo = get_user_repo()
-    user = await asyncio.to_thread(user_repo.get_by_id, user_id)
+    user = await asyncio.to_thread(user_repo.get_by_id_basic, user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

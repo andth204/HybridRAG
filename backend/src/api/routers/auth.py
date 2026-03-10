@@ -110,7 +110,7 @@ async def refresh_access_token(payload: RefreshTokenRequest) -> TokenResponse:
         )
 
     user_repo = get_user_repo()
-    user = await asyncio.to_thread(user_repo.get_by_id, consumed.user_id)
+    user = await asyncio.to_thread(user_repo.get_by_id_basic, consumed.user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -135,7 +135,7 @@ async def refresh_access_token(payload: RefreshTokenRequest) -> TokenResponse:
 @router.get("/me", response_model=UserProfileResponse)
 async def auth_me(auth: AuthContext = Depends(get_auth_context)) -> UserProfileResponse:
     user_repo = get_user_repo()
-    user = await asyncio.to_thread(user_repo.get_by_id, auth.user_id)
+    user = await asyncio.to_thread(user_repo.get_by_id_basic, auth.user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
