@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
-import { createChatSession, streamChatAnswer } from '@/services/chatApi'
+import {
+  listChatSessionMessages,
+  streamChatAnswer,
+  type BackendChatMessage,
+} from '@/services/chatApi'
 import { useAuthStore } from '@/stores/auth'
-import { useUiStore } from '@/stores/ui'
+import { useHistoryStore } from '@/stores/history'
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -16,6 +20,18 @@ function makeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100_000)}`
 }
 
+function toChatMessage(message: BackendChatMessage): ChatMessage | null {
+  if (message.role !== 'user' && message.role !== 'assistant') {
+    return null
+  }
+  return {
+    id: message.id,
+    role: message.role,
+    content: message.content || '',
+    createdAt: message.created_at || new Date().toISOString(),
+  }
+}
+
 export const useChatStore = defineStore('chat', {
   state: () => ({
     messages: [] as ChatMessage[],
@@ -24,6 +40,9 @@ export const useChatStore = defineStore('chat', {
     activeSessionId: '' as string,
     streamError: '',
     streamAbortController: null as AbortController | null,
+    streamingMessageId: '' as string,
+    pendingAssistantTokens: '',
+    streamFlushTimer: null as number | null,
   }),
   getters: {
     hasMessages: (state) => state.messages.length > 0,
@@ -32,9 +51,18 @@ export const useChatStore = defineStore('chat', {
     setDraft(value: string) {
       this.draft = value
     },
+    clearAssistantStreamState() {
+      if (this.streamFlushTimer !== null) {
+        window.cancelAnimationFrame(this.streamFlushTimer)
+        this.streamFlushTimer = null
+      }
+      this.pendingAssistantTokens = ''
+      this.streamingMessageId = ''
+    },
     resetConversation() {
       this.streamAbortController?.abort()
       this.streamAbortController = null
+      this.clearAssistantStreamState()
       this.messages = []
       this.draft = ''
       this.isStreaming = false
@@ -57,6 +85,8 @@ export const useChatStore = defineStore('chat', {
         content: '',
         createdAt: new Date().toISOString(),
       })
+      this.clearAssistantStreamState()
+      this.streamingMessageId = id
       this.isStreaming = true
       return id
     },
@@ -67,7 +97,41 @@ export const useChatStore = defineStore('chat', {
       }
       target.content += token
     },
+    flushAssistantTokens() {
+      if (this.streamFlushTimer !== null) {
+        window.cancelAnimationFrame(this.streamFlushTimer)
+        this.streamFlushTimer = null
+      }
+      if (!this.streamingMessageId || !this.pendingAssistantTokens) {
+        return
+      }
+      const chunk = this.pendingAssistantTokens
+      this.pendingAssistantTokens = ''
+      this.appendAssistantToken(this.streamingMessageId, chunk)
+    },
+    scheduleAssistantFlush() {
+      if (this.streamFlushTimer !== null) {
+        return
+      }
+      this.streamFlushTimer = window.requestAnimationFrame(() => {
+        this.flushAssistantTokens()
+      })
+    },
+    queueAssistantToken(token: string) {
+      if (!token) {
+        return
+      }
+      this.pendingAssistantTokens += token
+      this.scheduleAssistantFlush()
+    },
     setAssistantMessageContent(messageId: string, content: string) {
+      if (this.streamingMessageId === messageId) {
+        this.pendingAssistantTokens = ''
+        if (this.streamFlushTimer !== null) {
+          window.cancelAnimationFrame(this.streamFlushTimer)
+          this.streamFlushTimer = null
+        }
+      }
       const target = this.messages.find((item) => item.id === messageId)
       if (!target) {
         return
@@ -75,15 +139,33 @@ export const useChatStore = defineStore('chat', {
       target.content = content
     },
     finishAssistantMessage() {
+      if (this.pendingAssistantTokens && this.streamingMessageId) {
+        this.appendAssistantToken(this.streamingMessageId, this.pendingAssistantTokens)
+      }
+      this.clearAssistantStreamState()
       this.isStreaming = false
     },
-    async ensureActiveSession(accessToken: string): Promise<string> {
-      if (this.activeSessionId) {
-        return this.activeSessionId
+    async openSession(accessToken: string, sessionId: string) {
+      const token = accessToken.trim()
+      const targetSessionId = sessionId.trim()
+      if (!token || !targetSessionId) {
+        return
       }
-      const sessionId = await createChatSession(accessToken)
-      this.activeSessionId = sessionId
-      return sessionId
+
+      this.streamAbortController?.abort()
+      this.streamAbortController = null
+      this.clearAssistantStreamState()
+      this.streamError = ''
+      this.isStreaming = false
+
+      const backendMessages = await listChatSessionMessages(token, targetSessionId)
+      this.messages = backendMessages
+        .map((message) => toChatMessage(message))
+        .filter((item): item is ChatMessage => item !== null)
+
+      this.activeSessionId = targetSessionId
+      const historyStore = useHistoryStore()
+      historyStore.setActiveItem(targetSessionId)
     },
     async sendMessage(rawText?: string) {
       const text = (rawText ?? this.draft).trim()
@@ -92,7 +174,7 @@ export const useChatStore = defineStore('chat', {
       }
 
       const authStore = useAuthStore()
-      const uiStore = useUiStore()
+      const historyStore = useHistoryStore()
       this.pushUserMessage(text)
       this.draft = ''
 
@@ -106,16 +188,20 @@ export const useChatStore = defineStore('chat', {
         }
 
         const accessToken = authStore.accessToken.trim()
-        const sessionId = await this.ensureActiveSession(accessToken)
+        let sessionId = this.activeSessionId.trim()
+        let hasTouchedHistory = false
+        if (sessionId) {
+          historyStore.touchSession(sessionId, text)
+          hasTouchedHistory = true
+        }
         const controller = new AbortController()
         this.streamAbortController = controller
 
         await streamChatAnswer(
           accessToken,
           {
-            session_id: sessionId,
             question: text,
-            search_mode: uiStore.searchMode,
+            ...(sessionId ? { session_id: sessionId } : {}),
           },
           {
             onMeta: (data) => {
@@ -125,11 +211,20 @@ export const useChatStore = defineStore('chat', {
               const payload = data as Record<string, unknown>
               const streamSessionId = payload.session_id
               if (typeof streamSessionId === 'string' && streamSessionId.trim()) {
-                this.activeSessionId = streamSessionId
+                sessionId = streamSessionId.trim()
+                this.activeSessionId = sessionId
+                historyStore.setActiveItem(sessionId)
+                if (!hasTouchedHistory) {
+                  historyStore.touchSession(sessionId, text)
+                  hasTouchedHistory = true
+                }
               }
             },
             onToken: (token) => {
-              this.appendAssistantToken(assistantId, token)
+              if (this.streamingMessageId !== assistantId) {
+                this.streamingMessageId = assistantId
+              }
+              this.queueAssistantToken(token)
             },
             onError: (error) => {
               this.streamError = error || 'Unknown stream error'
@@ -145,10 +240,10 @@ export const useChatStore = defineStore('chat', {
         this.setAssistantMessageContent(assistantId, safeMessage)
       } finally {
         this.streamAbortController = null
+        this.finishAssistantMessage()
         if (!this.messages.find((item) => item.id === assistantId)?.content.trim()) {
           this.setAssistantMessageContent(assistantId, 'Xin loi, chua co du lieu phan hoi tu he thong.')
         }
-        this.finishAssistantMessage()
       }
     },
   },

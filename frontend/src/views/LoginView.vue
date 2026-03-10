@@ -25,7 +25,7 @@ async function handleGoogleLoginWithIdToken(idToken: string) {
     }
 
     uiStore.switchMainView('chat')
-    uiStore.setRightPanelCollapsed(true)
+    uiStore.setRightPanelCollapsed(false)
     await router.push('/workspace')
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Google sign-in failed.'

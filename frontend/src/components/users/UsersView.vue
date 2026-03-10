@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { useMessage } from 'naive-ui'
+import { NPopselect, NSelect } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
 import { useUsersStore, type ManagedUser, type UserRole } from '@/stores/users'
 
 const usersStore = useUsersStore()
 const authStore = useAuthStore()
-const message = useMessage()
+const notificationsStore = useNotificationsStore()
 
 const { errorMessage, filteredUsers, isLoading, managerUsers, newUsers7d, roleFilter, searchTerm, standardUsers, totalUsers } =
   storeToRefs(usersStore)
@@ -19,6 +20,18 @@ const activeUser = computed(() => {
 })
 
 const pendingRole = ref<UserRole>('user')
+const roleOptions = [
+  { label: 'Manager', value: 'manager' },
+  { label: 'User', value: 'user' },
+]
+const loginAccessOptions = [
+  { label: 'Allowed', value: 'allowed' },
+  { label: 'Blocked', value: 'blocked' },
+]
+const deleteActionOptions = [
+  { label: 'Delete user permanently', value: 'delete' },
+  { label: 'Cancel', value: 'cancel' },
+]
 
 watch(
   () => activeUser.value?.id ?? null,
@@ -79,64 +92,118 @@ async function loadUsers() {
   }
   const ok = await usersStore.fetchUsers(authStore.accessToken)
   if (!ok && usersStore.errorMessage) {
-    message.error(usersStore.errorMessage)
+    notificationsStore.pushNotification({
+      source: 'users',
+      level: 'error',
+      message: usersStore.errorMessage,
+    })
   }
 }
 
-async function onRoleChange(user: ManagedUser, event: Event) {
-  pendingRole.value = (event.target as HTMLSelectElement).value as UserRole
+function accessValue(user: ManagedUser): 'allowed' | 'blocked' {
+  return user.isBlocked ? 'blocked' : 'allowed'
 }
 
-async function confirmRoleUpdate(user: ManagedUser) {
-  if (pendingRole.value === user.role) {
-    message.info('Role is unchanged.')
+async function changeRole(user: ManagedUser, nextRole: string) {
+  const role = nextRole === 'manager' ? 'manager' : 'user'
+  pendingRole.value = role
+  if (role === user.role) {
     return
   }
 
-  const result = await usersStore.updateRole(authStore.accessToken, user.id, pendingRole.value)
+  const result = await usersStore.updateRole(authStore.accessToken, user.id, role)
   if (!result.ok) {
-    message.error(result.error || 'Update role failed.')
+    const errorText = result.error || 'Update role failed.'
+    pendingRole.value = user.role
+    notificationsStore.pushNotification({
+      source: 'users',
+      level: 'error',
+      message: errorText,
+    })
     return
   }
-  message.success('Role updated successfully.')
+  notificationsStore.pushNotification({
+    source: 'users',
+    level: 'success',
+    message: `Updated role for "${user.fullName}" to ${roleLabel(role)}.`,
+  })
 }
 
-async function toggleLoginAccess(user: ManagedUser) {
-  if (user.id === currentUserId.value && !user.isBlocked) {
-    message.warning('You cannot block your own account.')
+async function handleRoleSelection(nextRole: string) {
+  if (!activeUser.value) {
+    return
+  }
+  await changeRole(activeUser.value, nextRole)
+}
+
+async function changeLoginAccess(user: ManagedUser, nextAccess: string) {
+  const nextBlocked = nextAccess === 'blocked'
+  if (nextBlocked === user.isBlocked) {
     return
   }
 
-  const nextBlocked = !user.isBlocked
-  const confirmed = window.confirm(
-    nextBlocked
-      ? `Block "${user.fullName}" from signing in?`
-      : `Allow "${user.fullName}" to sign in again?`,
-  )
-  if (!confirmed) {
+  if (user.id === currentUserId.value && nextBlocked) {
+    notificationsStore.pushNotification({
+      source: 'users',
+      level: 'warning',
+      message: 'You cannot block your own account.',
+    })
     return
   }
 
   const result = await usersStore.updateLoginAccess(authStore.accessToken, user.id, nextBlocked)
   if (!result.ok) {
-    message.error(result.error || 'Update login access failed.')
+    const errorText = result.error || 'Update login access failed.'
+    notificationsStore.pushNotification({
+      source: 'users',
+      level: 'error',
+      message: errorText,
+    })
     return
   }
-  message.success(nextBlocked ? 'User has been blocked.' : 'User can sign in again.')
+  notificationsStore.pushNotification({
+    source: 'users',
+    level: nextBlocked ? 'warning' : 'success',
+    message: nextBlocked
+      ? `Blocked "${user.fullName}" from signing in.`
+      : `Allowed "${user.fullName}" to sign in again.`,
+  })
 }
 
-async function removeUser(user: ManagedUser) {
-  const approved = window.confirm(`Delete user "${user.fullName}"?`)
-  if (!approved) {
+async function handleLoginAccessSelection(nextAccess: string) {
+  if (!activeUser.value) {
+    return
+  }
+  await changeLoginAccess(activeUser.value, nextAccess)
+}
+
+async function handleDeleteSelection(user: ManagedUser, action: string) {
+  if (action !== 'delete') {
     return
   }
 
   const result = await usersStore.removeUser(authStore.accessToken, user.id)
   if (!result.ok) {
-    message.error(result.error || 'Delete user failed.')
+    const errorText = result.error || 'Delete user failed.'
+    notificationsStore.pushNotification({
+      source: 'users',
+      level: 'error',
+      message: errorText,
+    })
     return
   }
-  message.warning(`User "${user.fullName}" has been removed.`)
+  notificationsStore.pushNotification({
+    source: 'users',
+    level: 'warning',
+    message: `Deleted user "${user.fullName}".`,
+  })
+}
+
+async function handleDeleteAction(action: string) {
+  if (!activeUser.value) {
+    return
+  }
+  await handleDeleteSelection(activeUser.value, action)
 }
 
 onMounted(() => {
@@ -255,32 +322,42 @@ watch(
               </div>
             </div>
 
-            <div class="users-detail-field">
-              <label>Role</label>
-              <select :value="pendingRole" @change="onRoleChange(activeUser, $event)">
-                <option value="manager">Manager</option>
-                <option value="user">User</option>
-              </select>
+            <div class="users-detail-controls">
+              <div class="users-detail-field">
+                <label>Role</label>
+                <NSelect
+                  class="users-combo"
+                  :value="pendingRole"
+                  :options="roleOptions"
+                  :consistent-menu-width="false"
+                  @update:value="(value) => handleRoleSelection(String(value ?? 'user'))"
+                />
+              </div>
+
+              <div class="users-detail-field">
+                <label>Login Access</label>
+                <NSelect
+                  class="users-combo"
+                  :value="accessValue(activeUser)"
+                  :options="loginAccessOptions"
+                  :consistent-menu-width="false"
+                  :disabled="activeUser.id === currentUserId && !activeUser.isBlocked"
+                  @update:value="(value) => handleLoginAccessSelection(String(value ?? 'allowed'))"
+                />
+              </div>
             </div>
 
             <div class="users-detail-actions">
-              <button class="users-action-btn" type="button" @click="confirmRoleUpdate(activeUser)">
-                <span class="material-icons-outlined">check_circle</span>
-                Confirm Role
-              </button>
-              <button
-                class="users-action-btn"
-                :class="{ danger: !activeUser.isBlocked }"
-                type="button"
-                @click="toggleLoginAccess(activeUser)"
+              <NPopselect
+                :options="deleteActionOptions"
+                :consistent-menu-width="false"
+                @update:value="(value) => handleDeleteAction(String(value ?? 'cancel'))"
               >
-                <span class="material-icons-outlined">{{ activeUser.isBlocked ? 'lock_open' : 'block' }}</span>
-                {{ activeUser.isBlocked ? 'Allow Login' : 'Block Login' }}
-              </button>
-              <button class="users-action-btn danger" type="button" @click="removeUser(activeUser)">
-                <span class="material-icons-outlined">delete_outline</span>
-                Delete User
-              </button>
+                <button class="users-action-btn danger" type="button">
+                  <span class="material-icons-outlined">delete_outline</span>
+                  Delete User
+                </button>
+              </NPopselect>
             </div>
           </template>
 
@@ -293,3 +370,4 @@ watch(
     </template>
   </div>
 </template>
+

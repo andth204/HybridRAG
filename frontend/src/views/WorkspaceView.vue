@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue'
+import { computed, onMounted, watch, watchEffect } from 'vue'
 import ChatView from '@/components/chat/ChatView.vue'
 import DocumentsView from '@/components/documents/DocumentsView.vue'
 import HistoryView from '@/components/chat/HistoryView.vue'
@@ -10,10 +10,18 @@ import SettingsPanel from '@/components/layout/SettingsPanel.vue'
 import StatisticsView from '@/components/statistics/StatisticsView.vue'
 import UsersView from '@/components/users/UsersView.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useChatStore } from '@/stores/chat'
+import { useDocumentsStore } from '@/stores/documents'
+import { useHistoryStore } from '@/stores/history'
+import { useStatisticsStore } from '@/stores/statistics'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
+const chatStore = useChatStore()
+const docsStore = useDocumentsStore()
+const historyStore = useHistoryStore()
+const statisticsStore = useStatisticsStore()
 
 const isManager = computed(() => authStore.currentUser?.role === 'manager')
 const activeMainView = computed(() => {
@@ -32,6 +40,53 @@ watchEffect(() => {
     uiStore.switchMainView(activeMainView.value)
   }
 })
+
+onMounted(() => {
+  uiStore.setRightPanelCollapsed(false)
+})
+
+function resetSessionScopedStores() {
+  chatStore.resetConversation()
+  historyStore.reset()
+  docsStore.reset()
+  statisticsStore.reset()
+}
+
+async function syncHistorySessions() {
+  if (!authStore.isAuthenticated) {
+    historyStore.reset()
+    return
+  }
+  const hasSession = await authStore.ensureSession()
+  if (!hasSession || !authStore.accessToken.trim()) {
+    historyStore.reset()
+    return
+  }
+  await historyStore.loadSessions(authStore.accessToken.trim())
+}
+
+watch(
+  () => authStore.currentUser?.id ?? null,
+  (userId, previousUserId) => {
+    if (userId === previousUserId) {
+      return
+    }
+    resetSessionScopedStores()
+    if (userId) {
+      uiStore.setRightPanelCollapsed(false)
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => (authStore.isAuthenticated ? authStore.accessToken : ''),
+  () => {
+    void syncHistorySessions()
+    void docsStore.syncWithSession()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

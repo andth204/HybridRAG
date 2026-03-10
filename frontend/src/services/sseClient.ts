@@ -2,8 +2,7 @@ import { fetchEventSource, type EventSourceMessage } from '@microsoft/fetch-even
 
 export interface ChatStreamPayload {
   question: string
-  session_id: string
-  search_mode?: string
+  session_id?: string
 }
 
 export interface ChatStreamHandlers {
@@ -79,6 +78,7 @@ export async function streamChat(
 ) {
   await fetchEventSource(endpoint, {
     method: 'POST',
+    openWhenHidden: true,
     signal,
     headers: {
       'Content-Type': 'application/json',

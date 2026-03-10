@@ -5,7 +5,6 @@ export type MainView = 'chat' | 'history' | 'documents' | 'users' | 'statistics'
 export type AppLanguage = string
 export type SpeechLanguage = string
 export type SettingsTab = 'general' | 'account' | 'logout'
-export type SearchMode = 'keyword' | 'semantic' | 'hybrid'
 
 const THEME_STORAGE_KEY = 'hybridrag.theme'
 const SIDEBAR_STORAGE_KEY = 'hybridrag.sidebar-collapsed'
@@ -13,18 +12,16 @@ const RIGHT_PANEL_STORAGE_KEY = 'hybridrag.right-panel-collapsed'
 const LANGUAGE_STORAGE_KEY = 'hybridrag.language'
 const SPEECH_LANGUAGE_STORAGE_KEY = 'hybridrag.speech-language'
 const VOICE_STORAGE_KEY = 'hybridrag.voice'
-const SEARCH_MODE_STORAGE_KEY = 'hybridrag.search-mode'
 
 export const useUiStore = defineStore('ui', {
   state: () => ({
     theme: 'light' as ThemeMode,
     mainView: 'chat' as MainView,
     isSidebarCollapsed: false,
-    isRightPanelCollapsed: true,
+    isRightPanelCollapsed: false,
     language: 'auto' as AppLanguage,
     speechLanguage: 'auto' as SpeechLanguage,
     preferredVoice: '',
-    searchMode: 'hybrid' as SearchMode,
     isSettingsOpen: false,
     settingsTab: 'general' as SettingsTab,
   }),
@@ -37,7 +34,7 @@ export const useUiStore = defineStore('ui', {
       this.setTheme(savedTheme === 'dark' ? 'dark' : 'light')
       this.isSidebarCollapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'
       const savedRightPanel = localStorage.getItem(RIGHT_PANEL_STORAGE_KEY)
-      this.isRightPanelCollapsed = savedRightPanel === null ? true : savedRightPanel === '1'
+      this.isRightPanelCollapsed = savedRightPanel === null ? false : savedRightPanel === '1'
 
       const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY)
       this.language = savedLanguage?.trim() ? savedLanguage : 'auto'
@@ -46,11 +43,6 @@ export const useUiStore = defineStore('ui', {
       this.speechLanguage = savedSpeechLanguage?.trim() ? savedSpeechLanguage : 'auto'
 
       this.preferredVoice = localStorage.getItem(VOICE_STORAGE_KEY) ?? ''
-
-      const savedSearchMode = localStorage.getItem(SEARCH_MODE_STORAGE_KEY)
-      this.searchMode = savedSearchMode === 'keyword' || savedSearchMode === 'semantic' || savedSearchMode === 'hybrid'
-        ? savedSearchMode
-        : 'hybrid'
     },
     setTheme(theme: ThemeMode) {
       this.theme = theme
@@ -68,10 +60,6 @@ export const useUiStore = defineStore('ui', {
     setPreferredVoice(voiceName: string) {
       this.preferredVoice = voiceName
       localStorage.setItem(VOICE_STORAGE_KEY, voiceName)
-    },
-    setSearchMode(mode: SearchMode) {
-      this.searchMode = mode
-      localStorage.setItem(SEARCH_MODE_STORAGE_KEY, mode)
     },
     setSidebarCollapsed(value: boolean) {
       this.isSidebarCollapsed = value

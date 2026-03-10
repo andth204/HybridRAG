@@ -77,6 +77,23 @@ function extractApiErrorMessage(error: unknown, fallback: string): string {
   return message || fallback
 }
 
+function compareManagedUsers(a: ManagedUser, b: ManagedUser): number {
+  if (a.role !== b.role) {
+    return a.role === 'manager' ? -1 : 1
+  }
+
+  const updatedDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  if (updatedDiff !== 0) {
+    return updatedDiff
+  }
+
+  return a.fullName.localeCompare(b.fullName)
+}
+
+function getSortedUsers(users: ManagedUser[]): ManagedUser[] {
+  return [...users].sort(compareManagedUsers)
+}
+
 export const useUsersStore = defineStore('users', {
   state: () => ({
     users: [] as ManagedUser[],
@@ -99,9 +116,7 @@ export const useUsersStore = defineStore('users', {
         return user.fullName.toLowerCase().includes(term) || user.email.toLowerCase().includes(term)
       })
 
-      return filtered.sort((a, b) => {
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      })
+      return getSortedUsers(filtered)
     },
     selectedUser(state): ManagedUser | null {
       if (!state.selectedUserId) {
@@ -135,7 +150,7 @@ export const useUsersStore = defineStore('users', {
       this.selectedUserId = userId
     },
     setUsersFromBackend(items: BackendManagedUser[]) {
-      const mapped = items.map(toManagedUser)
+      const mapped = getSortedUsers(items.map(toManagedUser))
       const previousSelectedId = this.selectedUserId
       this.users = mapped
       if (previousSelectedId && mapped.some((item) => item.id === previousSelectedId)) {
@@ -168,6 +183,7 @@ export const useUsersStore = defineStore('users', {
         } else {
           this.users.unshift(mapped)
         }
+        this.users = getSortedUsers(this.users)
         return { ok: true, user: mapped }
       } catch (error) {
         return {
@@ -186,6 +202,7 @@ export const useUsersStore = defineStore('users', {
         } else {
           this.users.unshift(mapped)
         }
+        this.users = getSortedUsers(this.users)
         return { ok: true, user: mapped }
       } catch (error) {
         return {
@@ -202,7 +219,7 @@ export const useUsersStore = defineStore('users', {
           this.users.splice(index, 1)
         }
         if (this.selectedUserId === userId) {
-          this.selectedUserId = this.users[0]?.id ?? null
+          this.selectedUserId = getSortedUsers(this.users)[0]?.id ?? null
         }
         return { ok: true }
       } catch (error) {

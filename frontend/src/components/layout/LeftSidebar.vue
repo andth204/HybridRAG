@@ -90,9 +90,9 @@ const displayInitial = computed(() => displayName.value.charAt(0).toUpperCase() 
   <aside class="sidebar" :class="{ collapsed: isCollapsed }">
     <div class="sidebar-logo">
       <div v-if="!isCollapsed" class="logo-icon">
-        <span class="material-icons-outlined">blur_on</span>
+        <img src="/logoUtehy.png" alt="UTEHY logo" class="logo-icon-img" />
       </div>
-      <span v-if="!isCollapsed" class="logo-name">Script</span>
+      <span v-if="!isCollapsed" class="logo-name">UTEHY</span>
       <button class="btn-sq" type="button" @click="uiStore.toggleSidebar()">
         <span class="material-icons-outlined">{{ isCollapsed ? 'menu_open' : 'menu' }}</span>
       </button>

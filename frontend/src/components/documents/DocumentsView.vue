@@ -1,19 +1,17 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import dayjs from 'dayjs'
-import { useMessage } from 'naive-ui'
 import { storeToRefs } from 'pinia'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useDocumentsStore, type DocumentItem, type DocumentStatus } from '@/stores/documents'
 
 const docsStore = useDocumentsStore()
-const message = useMessage()
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
 const { failedCount, filteredDocuments, indexedCount, indexingCount, isUploading, searchTerm } =
   storeToRefs(docsStore)
 
 onMounted(() => {
-  docsStore.resumePendingIndexing()
+  void docsStore.syncWithSession()
 })
 
 function openPicker() {
@@ -73,28 +71,6 @@ function onDelete(item: DocumentItem) {
   docsStore.requestDelete(item.id)
 }
 
-watch(
-  () => docsStore.notifications.length,
-  () => {
-    const notices = docsStore.consumeNotifications()
-    for (const notice of notices) {
-      if (notice.type === 'success') {
-        message.success(notice.message)
-        continue
-      }
-      if (notice.type === 'error') {
-        message.error(notice.message)
-        continue
-      }
-      if (notice.type === 'warning') {
-        message.warning(notice.message)
-        continue
-      }
-      message.info(notice.message)
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
@@ -197,3 +173,4 @@ watch(
     </div>
   </div>
 </template>
+

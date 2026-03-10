@@ -1,30 +1,21 @@
-﻿<script setup lang="ts">
-import { computed } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+
 import { type DocumentStatus, useDocumentsStore } from '@/stores/documents'
-import { useHistoryStore } from '@/stores/history'
-import { useChatStore } from '@/stores/chat'
+import { useStatisticsStore } from '@/stores/statistics'
 
 const docsStore = useDocumentsStore()
-const historyStore = useHistoryStore()
-const chatStore = useChatStore()
+const statisticsStore = useStatisticsStore()
 
-const userStats = {
-  totalUsers: 1284,
-  newUsers7d: 96,
-  activeNow: 173,
-  avgSessionMinutes: 12.6,
-  retentionRate: 67,
-}
+const { errorMessage, hourlyActivity, isLoading, overview } = storeToRefs(statisticsStore)
 
-const hourlyActiveUsers = [
-  { hour: '07:00', users: 42 },
-  { hour: '09:00', users: 76 },
-  { hour: '11:00', users: 91 },
-  { hour: '14:00', users: 120 },
-  { hour: '17:00', users: 108 },
-  { hour: '20:00', users: 146 },
-  { hour: '22:00', users: 97 },
-]
+onMounted(() => {
+  void statisticsStore.syncWithSession()
+  if (docsStore.documents.length === 0) {
+    void docsStore.syncWithSession()
+  }
+})
 
 const chartWidth = 720
 const chartHeight = 248
@@ -32,17 +23,24 @@ const chartPadding = { top: 18, right: 16, bottom: 34, left: 36 }
 const chartInnerWidth = chartWidth - chartPadding.left - chartPadding.right
 const chartInnerHeight = chartHeight - chartPadding.top - chartPadding.bottom
 
-const visibleHistoryItems = computed(() => {
-  return historyStore.items.filter((item) => !historyStore.deletedIds.has(item.id))
+const userStats = computed(() => {
+  return overview.value
 })
 
-const totalSessionCount = computed(() => visibleHistoryItems.value.length)
-const totalChatMessageCount = computed(() => chatStore.messages.length)
+const hourlyActiveUsers = computed(() => {
+  return hourlyActivity.value
+})
+
+const totalSessionCount = computed(() => userStats.value.totalSessions)
+const totalChatMessageCount = computed(() => userStats.value.totalMessages)
 
 const totalDocumentCount = computed(() => docsStore.documents.length)
 const indexedDocumentCount = computed(() => docsStore.indexedCount)
 const indexingDocumentCount = computed(() => docsStore.indexingCount)
 const failedDocumentCount = computed(() => docsStore.failedCount)
+const deletingDocumentCount = computed(() => {
+  return docsStore.documents.filter((item) => item.status === 'deleting').length
+})
 
 const totalStorageMb = computed(() => {
   const totalBytes = docsStore.documents.reduce((sum, item) => sum + item.sizeBytes, 0)
@@ -59,32 +57,39 @@ const avgIndexProgress = computed(() => {
 })
 
 const peakHourData = computed(() => {
-  return [...hourlyActiveUsers].sort((a, b) => b.users - a.users)[0]
+  return [...hourlyActiveUsers.value].sort((a, b) => b.userCount - a.userCount)[0]
 })
 
 const peakHourLabel = computed(() => {
   if (!peakHourData.value) {
     return '--'
   }
-  const startHour = Number(peakHourData.value.hour.split(':')[0] ?? 0)
-  const nextHour = String((startHour + 1) % 24).padStart(2, '0')
-  return `${peakHourData.value.hour} - ${nextHour}:00`
+  const bucketDate = new Date(peakHourData.value.bucketStart)
+  if (Number.isNaN(bucketDate.getTime())) {
+    return peakHourData.value.label
+  }
+  const nextBucketDate = new Date(bucketDate.getTime() + 60 * 60 * 1000)
+  const startLabel = bucketDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  const endLabel = nextBucketDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  return `${startLabel} - ${endLabel}`
 })
 
 const maxUsers = computed(() => {
-  return Math.max(...hourlyActiveUsers.map((item) => item.users), 1)
+  return Math.max(...hourlyActiveUsers.value.map((item) => item.userCount), 1)
 })
 
 const chartPoints = computed(() => {
-  const denominator = Math.max(1, hourlyActiveUsers.length - 1)
-  return hourlyActiveUsers.map((item, index) => {
+  const points = hourlyActiveUsers.value
+  const denominator = Math.max(1, points.length - 1)
+  return points.map((item, index) => {
     const x = chartPadding.left + (index / denominator) * chartInnerWidth
-    const y = chartPadding.top + chartInnerHeight - (item.users / maxUsers.value) * chartInnerHeight
+    const y = chartPadding.top + chartInnerHeight - (item.userCount / maxUsers.value) * chartInnerHeight
     return {
-      ...item,
+      hour: item.label,
+      users: item.userCount,
       x: Number(x.toFixed(2)),
       y: Number(y.toFixed(2)),
-      isPeak: item.users === peakHourData.value?.users,
+      isPeak: item.userCount === peakHourData.value?.userCount,
     }
   })
 })
@@ -119,7 +124,9 @@ const yTicks = computed(() => {
 })
 
 const recentDocuments = computed(() => {
-  return [...docsStore.documents].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  return [...docsStore.documents]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 8)
 })
 
 const statusStats = computed(() => {
@@ -143,6 +150,12 @@ const statusStats = computed(() => {
       count: failedDocumentCount.value,
       percent: Math.round((failedDocumentCount.value / total) * 100),
     },
+    {
+      key: 'deleting' as DocumentStatus,
+      label: 'Deleting',
+      count: deletingDocumentCount.value,
+      percent: Math.round((deletingDocumentCount.value / total) * 100),
+    },
   ]
 })
 
@@ -163,21 +176,21 @@ function statusClass(status: DocumentStatus) {
         <span class="material-icons-outlined stats-kpi-icon">groups</span>
         <div class="stats-kpi-label">Users</div>
         <div class="stats-kpi-value">{{ userStats.totalUsers }}</div>
-        <div class="stats-kpi-meta">total accounts</div>
+        <div class="stats-kpi-meta">{{ userStats.managerUsers }} managers / {{ userStats.standardUsers }} users</div>
       </article>
 
       <article class="stats-kpi-card">
         <span class="material-icons-outlined stats-kpi-icon">person_add</span>
         <div class="stats-kpi-label">New users (7d)</div>
         <div class="stats-kpi-value">{{ userStats.newUsers7d }}</div>
-        <div class="stats-kpi-meta">+7.1% week-over-week</div>
+        <div class="stats-kpi-meta">created in the last 7 days</div>
       </article>
 
       <article class="stats-kpi-card">
         <span class="material-icons-outlined stats-kpi-icon">bolt</span>
-        <div class="stats-kpi-label">Active now</div>
-        <div class="stats-kpi-value">{{ userStats.activeNow }}</div>
-        <div class="stats-kpi-meta">retention {{ userStats.retentionRate }}%</div>
+        <div class="stats-kpi-label">Active (24h)</div>
+        <div class="stats-kpi-value">{{ userStats.activeUsers24h }}</div>
+        <div class="stats-kpi-meta">retention 7d {{ userStats.retentionRate7d }}%</div>
       </article>
 
       <article class="stats-kpi-card">
@@ -192,12 +205,15 @@ function statusClass(status: DocumentStatus) {
       <article class="stats-panel">
         <div class="stats-panel-title">User activity by hour</div>
         <div class="stats-user-chips">
-          <span class="stats-user-chip">Avg session {{ userStats.avgSessionMinutes }} min</span>
+          <span class="stats-user-chip">Avg session {{ userStats.avgSessionMinutes.toFixed(1) }} min</span>
           <span class="stats-user-chip">Sessions {{ totalSessionCount }}</span>
           <span class="stats-user-chip">Messages {{ totalChatMessageCount }}</span>
+          <span class="stats-user-chip">Peak {{ peakHourLabel }}</span>
         </div>
 
-        <div class="stats-chart-wrap" role="img" aria-label="User activity trend by hour">
+        <div v-if="errorMessage" class="stats-empty">{{ errorMessage }}</div>
+        <div v-else-if="isLoading && !hourlyActiveUsers.length" class="stats-empty">Loading statistics...</div>
+        <div v-else-if="hourlyActiveUsers.length" class="stats-chart-wrap" role="img" aria-label="User activity trend by hour">
           <svg
             class="stats-chart"
             :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
@@ -242,6 +258,7 @@ function statusClass(status: DocumentStatus) {
             </g>
           </svg>
         </div>
+        <div v-else class="stats-empty">No user activity data yet.</div>
       </article>
 
       <article class="stats-panel">

@@ -7,6 +7,7 @@ import App from './App.vue'
 import router from './router'
 import { useUiStore } from './stores/ui'
 import { useAuthStore } from './stores/auth'
+import { useNotificationsStore } from './stores/notifications'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -18,5 +19,7 @@ const uiStore = useUiStore(pinia)
 uiStore.initTheme()
 const authStore = useAuthStore(pinia)
 authStore.initAuth()
+const notificationsStore = useNotificationsStore(pinia)
+notificationsStore.hydrateForUser(authStore.currentUser?.id ?? null)
 
 app.mount('#app')

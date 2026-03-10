@@ -2,21 +2,37 @@
 import { storeToRefs } from 'pinia'
 import { useChatStore } from '@/stores/chat'
 import { useHistoryStore, type HistoryItem } from '@/stores/history'
+import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 
+const authStore = useAuthStore()
 const historyStore = useHistoryStore()
 const uiStore = useUiStore()
 const chatStore = useChatStore()
 const { activeItemId, groupedItems, filteredItems, searchTerm } = storeToRefs(historyStore)
 
-function openFromHistory(item: HistoryItem) {
+async function openFromHistory(item: HistoryItem) {
+  const hasSession = await authStore.ensureSession()
+  if (!hasSession || !authStore.accessToken.trim()) {
+    return
+  }
   historyStore.setActiveItem(item.id)
+  await chatStore.openSession(authStore.accessToken.trim(), item.id)
   uiStore.switchMainView('chat')
-  void chatStore.sendMessage(item.title)
 }
 
-function deleteItem(id: number) {
-  historyStore.deleteItem(id)
+async function deleteItem(id: string) {
+  const hasSession = await authStore.ensureSession()
+  if (!hasSession || !authStore.accessToken.trim()) {
+    return
+  }
+  await historyStore.deleteItem(authStore.accessToken.trim(), id)
+}
+
+function startNewChat() {
+  chatStore.resetConversation()
+  historyStore.setActiveItem(null)
+  uiStore.switchMainView('chat')
 }
 </script>
 
@@ -32,7 +48,7 @@ function deleteItem(id: number) {
           @input="historyStore.setSearchTerm(searchTerm)"
         />
       </div>
-      <button class="hist-new-btn" type="button" @click="uiStore.switchMainView('chat')">
+      <button class="hist-new-btn" type="button" @click="startNewChat">
         <span class="material-icons-outlined">add</span>
         New Chat
       </button>
@@ -66,9 +82,6 @@ function deleteItem(id: number) {
               <span class="hist-time">{{ item.time }}</span>
             </div>
             <div class="hist-actions" @click.stop>
-              <button class="hist-action-btn" type="button">
-                <span class="material-icons-outlined">push_pin</span>
-              </button>
               <button class="hist-action-btn del" type="button" @click="deleteItem(item.id)">
                 <span class="material-icons-outlined">delete_outline</span>
               </button>

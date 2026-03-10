@@ -5,13 +5,12 @@ import { useAuthStore } from '@/stores/auth'
 import {
   useUiStore,
   type AppLanguage,
-  type SearchMode,
   type SettingsTab,
   type SpeechLanguage,
   type ThemeMode,
 } from '@/stores/ui'
 
-type DropdownMenu = 'theme' | 'language' | 'search-mode' | 'speech-language' | 'voice'
+type DropdownMenu = 'theme' | 'language' | 'speech-language' | 'voice'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
@@ -76,12 +75,6 @@ const speechLanguageOptions: Array<{ value: SpeechLanguage; label: string }> = [
   { value: 'zh-CN', label: 'Chinese (Mainland)' },
 ]
 
-const searchModeOptions: Array<{ value: SearchMode; label: string }> = [
-  { value: 'keyword', label: 'Keyword' },
-  { value: 'semantic', label: 'Semantic' },
-  { value: 'hybrid', label: 'Hybrid' },
-]
-
 const activeThemeLabel = computed(() => {
   return themeOptions.find((item) => item.value === uiStore.theme)?.label ?? 'Light'
 })
@@ -92,10 +85,6 @@ const activeLanguageLabel = computed(() => {
 
 const activeSpeechLanguageLabel = computed(() => {
   return speechLanguageOptions.find((item) => item.value === uiStore.speechLanguage)?.label ?? 'Auto detect'
-})
-
-const activeSearchModeLabel = computed(() => {
-  return searchModeOptions.find((item) => item.value === uiStore.searchMode)?.label ?? 'Hybrid'
 })
 
 const speechSupported = computed(() => {
@@ -188,11 +177,6 @@ function selectTheme(value: ThemeMode) {
 
 function selectLanguage(value: AppLanguage) {
   uiStore.setLanguage(value)
-  closeMenu()
-}
-
-function selectSearchMode(value: SearchMode) {
-  uiStore.setSearchMode(value)
   closeMenu()
 }
 
@@ -433,42 +417,6 @@ onBeforeUnmount(() => {
                     >
                       <span>{{ option.label }}</span>
                       <span v-if="uiStore.speechLanguage === option.value" class="material-icons-outlined">check</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="settings-list-row">
-              <span class="settings-row-label">Search type</span>
-              <div class="settings-row-right">
-                <span class="settings-row-value">{{ activeSearchModeLabel }}</span>
-                <div class="settings-dropdown-wrap">
-                  <button
-                    class="settings-row-trigger"
-                    type="button"
-                    aria-label="Open search type options"
-                    @click.stop="toggleMenu('search-mode', $event)"
-                  >
-                    <span class="material-icons-outlined">expand_more</span>
-                  </button>
-                  <div
-                    v-if="openMenu === 'search-mode'"
-                    class="settings-popup-menu"
-                    role="listbox"
-                    aria-label="Search type options"
-                    :style="{ maxHeight: `${dropdownMaxHeight}px` }"
-                  >
-                    <button
-                      v-for="option in searchModeOptions"
-                      :key="option.value"
-                      class="settings-popup-item"
-                      :class="{ selected: uiStore.searchMode === option.value }"
-                      type="button"
-                      @click="selectSearchMode(option.value)"
-                    >
-                      <span>{{ option.label }}</span>
-                      <span v-if="uiStore.searchMode === option.value" class="material-icons-outlined">check</span>
                     </button>
                   </div>
                 </div>

@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useChatStore } from '@/stores/chat'
 import { useHistoryStore, type HistoryItem } from '@/stores/history'
+import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
+const authStore = useAuthStore()
 const chatStore = useChatStore()
 const historyStore = useHistoryStore()
-const { activeItemId } = storeToRefs(historyStore)
-
-const recentChats = computed(() => {
-  return historyStore.items.filter((item) => !historyStore.deletedIds.has(item.id)).slice(0, 7)
-})
+const { activeItemId, recentItems } = storeToRefs(historyStore)
+const recentChats = computed(() => recentItems.value)
 
 const chatCount = computed(() => recentChats.value.length)
 const isCollapsed = computed(() => uiStore.isRightPanelCollapsed)
+const deletingChatId = ref<string | null>(null)
 
 function startNewChat() {
   chatStore.resetConversation()
@@ -27,10 +27,38 @@ function getPrimaryQuestion(item: HistoryItem) {
   return item.title.trim() || item.preview.trim()
 }
 
-function openChat(item: HistoryItem) {
+async function openChat(item: HistoryItem) {
+  const hasSession = await authStore.ensureSession()
+  if (!hasSession || !authStore.accessToken.trim()) {
+    return
+  }
+
   historyStore.setActiveItem(item.id)
   uiStore.switchMainView('chat')
-  void chatStore.sendMessage(getPrimaryQuestion(item))
+  await chatStore.openSession(authStore.accessToken.trim(), item.id)
+}
+
+async function deleteRecentChat(sessionId: string) {
+  const targetSessionId = sessionId.trim()
+  if (!targetSessionId || deletingChatId.value === targetSessionId) {
+    return
+  }
+
+  const hasSession = await authStore.ensureSession()
+  if (!hasSession || !authStore.accessToken.trim()) {
+    return
+  }
+
+  deletingChatId.value = targetSessionId
+  try {
+    await historyStore.deleteItem(authStore.accessToken.trim(), targetSessionId)
+    if (chatStore.activeSessionId === targetSessionId) {
+      chatStore.resetConversation()
+      historyStore.setActiveItem(null)
+    }
+  } finally {
+    deletingChatId.value = null
+  }
 }
 </script>
 
@@ -61,18 +89,36 @@ function openChat(item: HistoryItem) {
         </div>
       </button>
 
-      <button
+      <div
         v-for="item in recentChats"
         :key="item.id"
-        class="project-card"
+        class="project-card-row"
         :class="{ active: activeItemId === item.id, compact: isCollapsed }"
-        type="button"
-        :title="getPrimaryQuestion(item)"
-        @click="openChat(item)"
       >
-        <span v-if="isCollapsed" class="project-mini-icon material-icons-outlined">chat_bubble_outline</span>
-        <span v-else class="project-name">{{ getPrimaryQuestion(item) }}</span>
-      </button>
+        <button
+          class="project-card"
+          :class="{ active: activeItemId === item.id, compact: isCollapsed }"
+          type="button"
+          :title="getPrimaryQuestion(item)"
+          @click="openChat(item)"
+        >
+          <span v-if="isCollapsed" class="project-mini-icon material-icons-outlined">chat_bubble_outline</span>
+          <span v-else class="project-name">{{ getPrimaryQuestion(item) }}</span>
+        </button>
+
+        <div v-if="!isCollapsed" class="project-card-actions" @click.stop>
+          <button
+            class="project-card-action-btn del"
+            type="button"
+            aria-label="Delete chat history"
+            title="Delete chat"
+            :disabled="deletingChatId === item.id"
+            @click="deleteRecentChat(item.id)"
+          >
+            <span class="material-icons-outlined">delete_outline</span>
+          </button>
+        </div>
+      </div>
     </div>
   </aside>
 </template>
