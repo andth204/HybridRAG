@@ -4,10 +4,11 @@ import pickle
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List
+from src.hybridrag.utils.text_normalization import tokenize_vietnamese_for_search
 logger = logging.getLogger(__name__)
 
 def _tokenize(text: str) -> List[str]:
-    return text.lower().split()
+    return tokenize_vietnamese_for_search(text)
 
 
 class BM25Store:
