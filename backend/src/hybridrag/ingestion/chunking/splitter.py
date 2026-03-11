@@ -55,7 +55,7 @@ class TextSplitter:
 
 def main():
     text_splitter = TextSplitter()
-    file_path = Path(r"D:/python-projects/nlp/generation/SmartChat/backend/data/raw/utehy_edu_vn.md")
+    file_path = Path(r"D:\my-projects\nlp\HybridRAG\backend\data\samples\Điểm 2025.md")
     
     with open(file_path, 'r', encoding='utf-8') as file:    
         content = file.read()
@@ -67,7 +67,7 @@ def main():
     for i, chunk in enumerate(chunks):
         token_count = len(encoder.encode(chunk))
         print(f"Chunk {i+1}: {len(chunk)} chars, {token_count} tokens")
-        print(f"Content: {chunk[:500]}{'...' if len(chunk) > 500 else ''}\n")
+        print(f"Content: {chunk}\n")
 
 if __name__ == "__main__":
     main()
