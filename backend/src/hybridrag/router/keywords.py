@@ -1,13 +1,10 @@
 import re
-import unicodedata
 from typing import Tuple, List
 from .route import Route
+from src.hybridrag.utils.text_normalization import normalize_vietnamese_for_search
 
 def normalize_text(text: str) -> str:
-    text = unicodedata.normalize('NFD', text)
-    text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
-    text = re.sub(r'[^\w\s]', ' ', text.lower())
-    return text.strip()
+    return normalize_vietnamese_for_search(text)
 
 class KeywordRouter:
     def __init__(self, routes: List[Route]):
