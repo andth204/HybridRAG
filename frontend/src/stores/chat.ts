@@ -235,14 +235,14 @@ export const useChatStore = defineStore('chat', {
         )
       } catch (error) {
         const message = error instanceof Error ? error.message.trim() : ''
-        const fallbackMessage = 'Xin loi, chua the tao cau tra loi luc nay. Vui long thu lai.'
+        const fallbackMessage = 'Xin lỗi, chưa thể tạo câu trả lời lúc này. Vui lòng thử lại.'
         const safeMessage = this.streamError || message || fallbackMessage
         this.setAssistantMessageContent(assistantId, safeMessage)
       } finally {
         this.streamAbortController = null
         this.finishAssistantMessage()
         if (!this.messages.find((item) => item.id === assistantId)?.content.trim()) {
-          this.setAssistantMessageContent(assistantId, 'Xin loi, chua co du lieu phan hoi tu he thong.')
+          this.setAssistantMessageContent(assistantId, 'Xin lỗi, chưa có dữ liệu phản hồi từ hệ thống.')
         }
       }
     },

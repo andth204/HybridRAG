@@ -57,8 +57,6 @@ function handleKeydown(event: KeyboardEvent) {
       </div>
     </div>
 
-    <p class="footer-note">
-      UTEHY Admissions Assistant • v0.1.1
-    </p>
+    <p class="footer-note">UTEHY Admissions Assistant • v0.1.1</p>
   </div>
 </template>
