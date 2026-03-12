@@ -162,11 +162,11 @@ function onDelete(item: DocumentItem) {
           <button
             class="docs-mini-btn danger"
             type="button"
-            :disabled="item.status === 'deleting'"
+            :disabled="item.status === 'indexing'"
             @click="onDelete(item)"
           >
             <span class="material-icons-outlined">delete_outline</span>
-            Delete
+            {{ item.status === 'deleting' ? 'Retry delete' : 'Delete' }}
           </button>
         </div>
       </article>

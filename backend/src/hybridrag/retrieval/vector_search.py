@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import OrderedDict
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 import numpy as np
 from src.config.settings import settings
@@ -61,19 +62,39 @@ class EmbeddingLRUCache:
             raise RuntimeError("Missing embedding(s) after cache lookup")
         return np.stack(result, axis=0).astype(np.float32)
 
-
 class VectorSearcher:
     def __init__(self) -> None:
         self._store: FAISSStore | None = None
         self._emb_cache = EmbeddingLRUCache(
             maxsize=int(getattr(settings, "EMBEDDING_LRU_MAXSIZE", 2048))
         )
+        self._lock: asyncio.Lock | None = None
+        self._index_file = Path(settings.FAISS_CACHE_DIR) / "index.faiss"
+        self._meta_file = Path(settings.FAISS_CACHE_DIR) / "meta.pkl"
+        self._cache_signature: tuple[tuple[bool, int, int], tuple[bool, int, int]] | None = None
+
+    def _get_lock(self) -> asyncio.Lock:
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
 
     async def _embed(self, texts: List[str]) -> np.ndarray:
         return await self._emb_cache.get_many(texts, embedder.embed)
 
-    def load_index(self) -> None:
-        if self._store is not None:
+    @staticmethod
+    def _file_signature(path: Path) -> tuple[bool, int, int]:
+        try:
+            stat = path.stat()
+        except FileNotFoundError:
+            return (False, 0, 0)
+        return (True, int(stat.st_mtime_ns), int(stat.st_size))
+
+    def _index_signature(self) -> tuple[tuple[bool, int, int], tuple[bool, int, int]]:
+        return (self._file_signature(self._index_file), self._file_signature(self._meta_file))
+
+    def load_index(self, *, force: bool = False) -> None:
+        signature = self._index_signature()
+        if not force and self._store is not None and self._cache_signature == signature:
             return
         self._store = FAISSStore(
             embedding_fn=self._embed,
@@ -86,7 +107,17 @@ class VectorSearcher:
             ivf_nlist=int(getattr(settings, "FAISS_IVF_NLIST", 4096)),
             ivf_nprobe=int(getattr(settings, "FAISS_IVF_NPROBE", 16)),
         )
+        self._cache_signature = signature
         log.info("VectorSearcher: FAISS index loaded from %s (metric=IP, normalized)", settings.FAISS_CACHE_DIR)
+
+    async def _ensure_loaded(self) -> None:
+        signature = self._index_signature()
+        if self._store is not None and self._cache_signature == signature:
+            return
+        async with self._get_lock():
+            signature = self._index_signature()
+            if self._store is None or self._cache_signature != signature:
+                self.load_index(force=True)
 
     async def search(
         self,
@@ -97,11 +128,13 @@ class VectorSearcher:
         nprobe: int | None = None,
         ef_search: int | None = None,
     ) -> List[Dict[str, Any]]:
-        if self._store is None:
+        await self._ensure_loaded()
+        store = self._store
+        if store is None:
             raise RuntimeError("FAISS index not loaded. Call load_index() first.")
 
         raw = await asyncio.wait_for(
-            self._store.search(query, top_k=top_k, nprobe=nprobe, ef_search=ef_search),
+            store.search(query, top_k=top_k, nprobe=nprobe, ef_search=ef_search),
             timeout=timeout,
         )
         return [
@@ -122,7 +155,6 @@ async def test_search(query: str, top_k: int) -> None:
     for i, r in enumerate(await searcher.search(query=query, top_k=top_k), 1):
         print(f"[{i}] chunk_id={r['chunk_id']}  score={r['vector_score']:.4f}")
         print(f"     {r['content'][:500]}...\n")
-
 
 if __name__ == "__main__":
     asyncio.run(test_search(query="Cac phuong thuc tuyen sinh", top_k=settings.VECTOR_SEARCH_K))

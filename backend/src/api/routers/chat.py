@@ -27,6 +27,7 @@ CHAT_HISTORY_LIMIT = int(getattr(settings, "CHAT_HISTORY_LIMIT", 200))
 SearchMode = Literal["hybrid"]
 UNTITLED_SESSION_TITLE = "Untitled conversation"
 SESSION_TITLE_MAX_LENGTH = 120
+EMPTY_ANSWER_FALLBACK = "Xin lỗi, hệ thống chưa tạo được câu trả lời, vui lòng thử lại."
 
 
 def _normalize_search_mode(raw_mode: str | None) -> SearchMode:
@@ -140,6 +141,11 @@ def _to_rewriter_history(messages: list[ChatMessage]) -> list[dict[str, str]]:
 
 def _sse(event: str, payload: dict[str, Any]) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+def _normalize_answer_text(answer_text: str) -> str:
+    normalized = answer_text.strip()
+    return normalized or EMPTY_ANSWER_FALLBACK
 
 
 async def _get_owned_session_or_404(
@@ -432,6 +438,7 @@ async def chat_answer(
             )
         ).strip()
 
+    answer_text = _normalize_answer_text(answer_text)
     generate_ms = (time.perf_counter() - generate_t0) * 1000
     sources = compact_sources(retrieved_docs)
 
@@ -562,7 +569,7 @@ async def chat_answer_stream(
                     answer_parts.append(piece)
                     yield _sse("chunk", {"content": piece})
 
-            answer_text = "".join(answer_parts).strip()
+            answer_text = _normalize_answer_text("".join(answer_parts))
             sources = compact_sources(retrieved_docs)
             metadata: dict[str, Any] = {
                 "type": "answer",

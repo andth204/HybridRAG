@@ -8,7 +8,7 @@ export interface ChatStreamPayload {
 export interface ChatStreamHandlers {
   onMeta?: (data: unknown) => void
   onToken?: (token: string) => void
-  onDone?: () => void
+  onDone?: (data: unknown) => void
   onError?: (error: string) => void
 }
 
@@ -48,7 +48,7 @@ function handleMessage(event: EventSourceMessage, handlers: ChatStreamHandlers) 
   }
 
   if (event.event === 'done') {
-    handlers.onDone?.()
+    handlers.onDone?.(safeParseJson(event.data))
     return
   }
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import logging
 import mimetypes
 import time
 import unicodedata
@@ -27,6 +28,7 @@ from src.config.settings import settings
 from src.hybridrag.ingestion.ingestion_service.helper.state_repo import FileStateRepo
 
 router = APIRouter(prefix="/api/v1/files", tags=["files"])
+logger = logging.getLogger(__name__)
 
 
 class FileAcceptedResponse(BaseModel):
@@ -762,6 +764,23 @@ async def delete_file(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"MinIO delete failed: {exc}",
             ) from exc
+    message = "Delete accepted; cleanup event queued for ingestion service"
+    try:
+        await asyncio.to_thread(
+            _publish_indexing_input_event,
+            bucket=target_bucket,
+            key=scoped_key,
+            event_type="file_deleted",
+            force=True,
+        )
+    except RuntimeError as exc:
+        logger.warning(
+            "Delete cleanup publish failed for bucket=%s key=%s: %s",
+            target_bucket,
+            scoped_key,
+            exc,
+        )
+        message = "Delete accepted in MinIO, but cleanup queue failed; retry delete if the item remains stuck"
 
     key_for_path = _document_public_key(auth, scoped_key)
     return FileAcceptedResponse(
@@ -769,6 +788,6 @@ async def delete_file(
         key=key_for_path,
         scoped_key=scoped_key,
         action="delete_requested",
-        message="Delete accepted; ingestion service will process delete event asynchronously",
+        message=message,
         status_endpoint=f"/api/v1/files/{key_for_path}/status?bucket={target_bucket}",
     )

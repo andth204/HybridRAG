@@ -226,6 +226,19 @@ export const useChatStore = defineStore('chat', {
               }
               this.queueAssistantToken(token)
             },
+            onDone: (data) => {
+              this.flushAssistantTokens()
+              if (!data || typeof data !== 'object') {
+                return
+              }
+              const payload = data as Record<string, unknown>
+              const answer = typeof payload.answer === 'string' ? payload.answer.trim() : ''
+              const currentContent =
+                this.messages.find((item) => item.id === assistantId)?.content.trim() || ''
+              if (!currentContent && answer) {
+                this.setAssistantMessageContent(assistantId, answer)
+              }
+            },
             onError: (error) => {
               this.streamError = error || 'Unknown stream error'
               controller.abort()
