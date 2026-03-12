@@ -213,13 +213,6 @@ class QueryReflection:
             )
             if result != current_query:
                 await self._cache_set(cache_key, result)
-
-            log.debug(
-                "QueryReflection completed in %.1f ms | '%s' -> '%s'",
-                (time.perf_counter() - t0) * 1000,
-                current_query,
-                result,
-            )
         except asyncio.TimeoutError:
             log.warning(
                 "QueryReflection timed out after %.1f ms - returning original query",
@@ -285,12 +278,12 @@ query_reflection = QueryReflection()
 
 if __name__ == "__main__":
     async def _main() -> None:
-        q = "Điểm chuẩn cntt?"
+        q = "Cơ sở đào tạo"
         chat_history = [
-            # {"role": "user", "content": "Phương thức & điều kiện xét tuyển??"},
-            # {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
-            # {"role": "user", "content": "Minh quan tam den CNTT."},
-            # {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
+            {"role": "user", "content": "Phương thức & điều kiện xét tuyển??"},
+            {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
+            {"role": "user", "content": "Minh quan tam den CNTT."},
+            {"role": "assistant", "content": "Co CNTT, KTPM, Ke toan, QTKD va mot so nganh khac."},
         ]
 
         rewritten_query = await query_reflection.reflect(q, chat_history)
