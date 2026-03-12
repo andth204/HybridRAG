@@ -2,19 +2,11 @@ from typing import Dict
 
 
 QUERY_REFLECTION_PROMPT = """
-Rewrite the current user question into exactly ONE standalone Vietnamese question.
-
-Rules:
-1. If the current question is already clear, specific, and fully understandable on its own, return it EXACTLY as is.
-2. Do not rewrite, rephrase, polish, shorten, expand, improve, or normalize a question that is already standalone.
-3. Only rewrite when necessary to restore missing context from conversation history.
-4. If the question is vague, elliptical, or referential, resolve the missing context from the most relevant previous turn and make it explicit.
-5. Preserve the original intent and language style.
-6. Do NOT answer the question.
-7. Output plain text only.
-8. Output exactly ONE line.
-9. Prefer no-change over unnecessary rewriting.
-
+Rewrite the user's current question as a separate question in Vietnamese.
+If the question is clear and complete, return it as is.
+If not (or truly unclear), add the missing context from the most relevant previous reply.
+Maintain the original intent and style. Do not reply.
+Output only plain, single-line text.
 Conversation history:
 {query_history}
 
