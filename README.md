@@ -1,1 +1,1 @@
-# HybridRAG
+# HybridRAG demo
