@@ -1,1 +1,1 @@
-# HybridRAG demo
+# HybridRAG Architecture
