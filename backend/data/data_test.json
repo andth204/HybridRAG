@@ -1,0 +1,603 @@
+{
+  "dataset_name": "utehy_admissions_test_50",
+  "description": "Bo du lieu kiem thu gom 50 cau hoi va dap an tham chieu, duoc bien soan tu cac tep trong backend/data/samples.",
+  "language": "vi",
+  "sample_count": 50,
+  "source_dir": "backend/data/samples",
+  "source_file_count": 7,
+  "covered_source_files": [
+    "Thông báo tuyển sinh đại học chính quy năm 2026.txt",
+    "wiki.md",
+    "tuyen_sinh_247.md",
+    "Điểm 2023.md",
+    "Điểm 2024.md",
+    "Điểm 2025.md",
+    "qa_fb.md"
+  ],
+  "difficulty_distribution": {
+    "easy": 15,
+    "medium": 25,
+    "hard": 10
+  },
+  "notes": [
+    "Cac dap an tham chieu duoc rut gon, chuan hoa va viet lai ngan gon tu du lieu nguon.",
+    "Bo du lieu nay su dung toan bo cac tep hien co trong thu muc backend/data/samples.",
+    "Cac mau co nguon qa_fb.md phan anh noi dung FAQ trong kho du lieu hien tai, phu hop cho kiem thu chatbot theo ngu canh tu van."
+  ],
+  "samples": [
+    {
+      "id": "sample_001",
+      "category": "tong_quan_tuyen_sinh",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Năm 2026 trường Đại học Sư phạm Kỹ thuật Hưng Yên tuyển bao nhiêu chỉ tiêu và bao nhiêu ngành?",
+      "reference_answer": "Theo thông báo tuyển sinh đại học chính quy năm 2026, trường tuyển 3.950 chỉ tiêu với 29 ngành đào tạo thuộc nhiều lĩnh vực như công nghệ kỹ thuật, kỹ thuật, công nghệ thông tin, kinh tế - quản lý, ngôn ngữ, sư phạm và khoa học xã hội.",
+      "source_files": [
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt"
+      ]
+    },
+    {
+      "id": "sample_002",
+      "category": "tong_quan_tuyen_sinh",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Năm 2026 trường xét tuyển theo những phương thức nào?",
+      "reference_answer": "Năm 2026, trường xét tuyển theo 4 phương thức gồm: điểm thi tốt nghiệp THPT 2026; học bạ THPT lớp 10, 11, 12; tuyển thẳng theo quy chế; và điểm các kỳ thi V-SAT, HSA của ĐHQG Hà Nội, TSA của Đại học Bách khoa Hà Nội.",
+      "source_files": [
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt"
+      ]
+    },
+    {
+      "id": "sample_003",
+      "category": "chuong_trinh_dac_biet",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Lớp sinh viên tài năng năm 2026 có gì nổi bật?",
+      "reference_answer": "Theo thông báo năm 2026, trường có 6 lớp sinh viên tài năng, mỗi lớp khoảng 20-25 sinh viên, ở các ngành mũi nhọn. Sinh viên được giảng viên trình độ cao trực tiếp giảng dạy, được ưu tiên ở ký túc xá nếu có nhu cầu và có quỹ học bổng riêng khoảng 1 tỷ đồng mỗi năm.",
+      "source_files": [
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt"
+      ]
+    },
+    {
+      "id": "sample_004",
+      "category": "chuong_trinh_dac_biet",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Năm 2026 trường có những lớp giảng dạy bằng tiếng Anh hoặc tiếng Trung nào?",
+      "reference_answer": "Thông báo năm 2026 cho biết trường có 4 lớp giảng dạy bằng ngoại ngữ, gồm 3 lớp dạy bằng tiếng Anh cho các ngành Khoa học máy tính, Công nghệ kỹ thuật điện - điện tử, Công nghệ kỹ thuật cơ điện tử; và 1 lớp dạy một phần bằng tiếng Trung Quốc cho ngành Công nghệ may.",
+      "source_files": [
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt"
+      ]
+    },
+    {
+      "id": "sample_005",
+      "category": "chuong_trinh_dac_biet",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Trường có chương trình liên kết quốc tế nào theo thông báo tuyển sinh 2026?",
+      "reference_answer": "Theo thông báo tuyển sinh năm 2026, trường có các chương trình liên kết quốc tế 2+2 và 3+2 với các trường tại Hàn Quốc, Đài Loan, Úc và Hoa Kỳ.",
+      "source_files": [
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt"
+      ]
+    },
+    {
+      "id": "sample_006",
+      "category": "co_so_dao_tao",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Theo thông báo tuyển sinh 2026, trường đào tạo tại những cơ sở nào?",
+      "reference_answer": "Theo thông báo năm 2026, trường đào tạo tại 3 cơ sở: trụ sở chính ở xã Việt Tiến, tỉnh Hưng Yên; cơ sở Mỹ Hào ở phường Mỹ Hào, tỉnh Hưng Yên; và cơ sở Hải Phòng ở số 68 Đỗ Ngọc Du, phường Lê Thanh Nghị, thành phố Hải Phòng.",
+      "source_files": [
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt"
+      ]
+    },
+    {
+      "id": "sample_007",
+      "category": "gioi_thieu_truong",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Mã trường và tên tiếng Anh của trường là gì?",
+      "reference_answer": "Mã trường là SKH. Tên tiếng Anh của trường là Hung Yen University of Technology and Education.",
+      "source_files": [
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt",
+        "wiki.md",
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_008",
+      "category": "gioi_thieu_truong",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Trường được thành lập năm nào và đến khi nào được nâng cấp thành đại học?",
+      "reference_answer": "Trường được thành lập ngày 21/12/1966 với tên gọi Trường Trung học Công nghiệp Hưng Yên. Đến ngày 06/01/2003, trường được nâng cấp thành Trường Đại học Sư phạm Kỹ thuật Hưng Yên.",
+      "source_files": [
+        "wiki.md"
+      ]
+    },
+    {
+      "id": "sample_009",
+      "category": "gioi_thieu_truong",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Từ khi nào trường trực thuộc Bộ Giáo dục và Đào tạo?",
+      "reference_answer": "Theo dữ liệu giới thiệu trường, từ ngày 01/07/1987 trường trực thuộc Bộ Giáo dục và Đào tạo.",
+      "source_files": [
+        "wiki.md"
+      ]
+    },
+    {
+      "id": "sample_010",
+      "category": "gioi_thieu_truong",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Tính đến năm 2024 trường có bao nhiêu cán bộ, viên chức và bao nhiêu giảng viên?",
+      "reference_answer": "Tính đến năm 2024, trường có 505 cán bộ viên chức. Trong đó đội ngũ giảng viên gồm 407 người, bao gồm 1 giáo sư, 20 phó giáo sư, 123 tiến sĩ và 257 thạc sĩ.",
+      "source_files": [
+        "wiki.md"
+      ]
+    },
+    {
+      "id": "sample_011",
+      "category": "thanh_tich",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Trường có thành tích gì nổi bật ở Robocon?",
+      "reference_answer": "Theo dữ liệu giới thiệu trường, UTEHY hai lần vô địch Robocon Việt Nam vào các năm 2015 và 2024. Ở ABU Robocon, đội tuyển của trường vô địch năm 2015 và đạt á quân cùng giải ba tại cuộc thi năm 2024.",
+      "source_files": [
+        "wiki.md"
+      ]
+    },
+    {
+      "id": "sample_012",
+      "category": "tong_quan_tuyen_sinh",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Năm 2025 trường dự kiến tuyển bao nhiêu chỉ tiêu, bao nhiêu ngành và theo mấy phương thức?",
+      "reference_answer": "Theo đề án tuyển sinh năm 2025, trường dự kiến tuyển 3.600 chỉ tiêu, đào tạo 25 ngành và xét tuyển theo 5 phương thức.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_013",
+      "category": "tong_quan_tuyen_sinh",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "5 phương thức tuyển sinh của trường trong năm 2025 gồm những gì?",
+      "reference_answer": "Năm 2025, trường xét tuyển theo 5 phương thức: điểm thi tốt nghiệp THPT; điểm kỳ thi đánh giá đầu vào trên máy tính V-SAT; học bạ THPT; xét tuyển thẳng và xét tuyển kết hợp; điểm kỳ thi đánh giá năng lực HSA của ĐHQG Hà Nội và kỳ thi đánh giá tư duy TSA của Đại học Bách khoa Hà Nội.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_014",
+      "category": "thoi_gian_tuyen_sinh",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Thời gian đăng ký xét tuyển đợt 1 năm 2025 là khi nào?",
+      "reference_answer": "Theo đề án năm 2025, thời gian đăng ký xét tuyển đợt 1 dự kiến từ ngày 16/07/2025 đến 17h00 ngày 28/07/2025.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_015",
+      "category": "thoi_gian_tuyen_sinh",
+      "difficulty": "easy",
+      "muc_do": "de",
+      "question": "Thời gian nộp lệ phí xét tuyển trực tuyến năm 2025 là khi nào?",
+      "reference_answer": "Thời gian nộp lệ phí xét tuyển theo số lượng nguyện vọng bằng hình thức trực tuyến dự kiến từ ngày 29/07/2025 đến 17h00 ngày 05/08/2025.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_016",
+      "category": "thoi_gian_tuyen_sinh",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Thí sinh tự do muốn đăng ký xét tuyển đợt 1 năm 2025 cần làm gì và trong thời gian nào?",
+      "reference_answer": "Theo đề án tuyển sinh 2025, thí sinh đã tốt nghiệp THPT nhưng chưa có tài khoản trên hệ thống tuyển sinh phải đăng ký thông tin cá nhân để được cấp tài khoản sử dụng cho việc đăng ký nguyện vọng, trong thời gian từ ngày 10/07/2025 đến ngày 20/07/2025.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_017",
+      "category": "ho_so_tuyen_sinh",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Hồ sơ xét học bạ năm 2025 gồm những giấy tờ gì?",
+      "reference_answer": "Hồ sơ xét học bạ năm 2025 gồm: bản sao học bạ THPT hoặc tương đương; bản sao bằng tốt nghiệp THPT hoặc giấy chứng nhận tốt nghiệp tạm thời đối với thí sinh tốt nghiệp năm 2025; bản sao CCCD; và phiếu đăng ký xét tuyển theo mẫu của trường.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_018",
+      "category": "ho_so_tuyen_sinh",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Nếu có xét tuyển bổ sung năm 2025 thì thí sinh có thể nộp hồ sơ bằng những cách nào?",
+      "reference_answer": "Nếu có xét tuyển bổ sung, thí sinh có thể đăng ký trực tuyến qua cổng thông tin tuyển sinh của trường tại https://tuyensinh.utehy.edu.vn, nộp trực tiếp tại 3 cơ sở đào tạo hoặc gửi chuyển phát nhanh qua đường bưu điện.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_019",
+      "category": "phuong_thuc_xet_tuyen",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Ngành Công nghệ thông tin năm 2025 có thể xét theo những phương thức nào?",
+      "reference_answer": "Theo đề án năm 2025, ngành Công nghệ thông tin có thể xét bằng các phương thức: V-SAT; điểm thi THPT hoặc học bạ với các tổ hợp A00, A01, D01, D07; điểm đánh giá tư duy của Đại học Bách khoa Hà Nội với mã K00; và điểm đánh giá năng lực của ĐHQG Hà Nội với mã Q00. Trường cũng áp dụng diện ưu tiên, xét tuyển thẳng theo quy định chung.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_020",
+      "category": "to_hop_xet_tuyen",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Tổ hợp A00, A01 và D01 gồm những môn nào?",
+      "reference_answer": "Theo đề án tuyển sinh 2025, A00 gồm Toán, Vật lý, Hóa học; A01 gồm Toán, Vật lý, Tiếng Anh; và D01 gồm Toán, Tiếng Anh, Ngữ văn.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_021",
+      "category": "to_hop_xet_tuyen",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "K00 và Q00 trong đề án tuyển sinh 2025 được dùng cho kỳ thi nào?",
+      "reference_answer": "Trong đề án tuyển sinh 2025, K00 là mã dùng cho kỳ thi đánh giá tư duy do Đại học Bách khoa Hà Nội tổ chức, còn Q00 là mã dùng cho kỳ thi đánh giá năng lực do Đại học Quốc gia Hà Nội tổ chức.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_022",
+      "category": "hoc_phi",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Học phí dự kiến năm học 2025-2026 của nhóm ngành Máy tính và công nghệ thông tin, Công nghệ kỹ thuật, Kỹ thuật, Sản xuất và chế biến là bao nhiêu?",
+      "reference_answer": "Theo dữ liệu tuyển sinh 2025, học phí dự kiến của nhóm ngành Máy tính và công nghệ thông tin, Công nghệ kỹ thuật, Kỹ thuật, Sản xuất và chế biến là 1.790.000 đồng mỗi tháng, tương đương 510.000 đồng mỗi tín chỉ.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_023",
+      "category": "hoc_phi",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Học phí dự kiến của nhóm ngành Khoa học giáo dục và đào tạo giáo viên, Nhân văn, Khoa học xã hội và hành vi, Kinh doanh và quản lý là bao nhiêu?",
+      "reference_answer": "Theo dữ liệu tuyển sinh 2025, học phí dự kiến của nhóm ngành Khoa học giáo dục và đào tạo giáo viên, Nhân văn, Khoa học xã hội và hành vi, Kinh doanh và quản lý là 1.550.000 đồng mỗi tháng, tương đương 459.000 đồng mỗi tín chỉ.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_024",
+      "category": "hoc_phi",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Học phí dự kiến của các lớp được giảng dạy bằng tiếng Anh là bao nhiêu?",
+      "reference_answer": "Theo đề án tuyển sinh 2025, sinh viên các lớp thuộc chương trình đào tạo được giảng dạy bằng tiếng Anh có học phí dự kiến là 2.400.000 đồng mỗi sinh viên mỗi tháng.",
+      "source_files": [
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_025",
+      "category": "hoc_phi_hoc_bong",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Theo dữ liệu FAQ, sinh viên ngành Sư phạm công nghệ được hỗ trợ gì về học phí và tài chính?",
+      "reference_answer": "Theo dữ liệu trong qa_fb.md, sinh viên ngành Sư phạm công nghệ được miễn 100% học phí và được hỗ trợ 3,63 triệu đồng mỗi tháng trong 4 năm học.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_026",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo điểm thi THPT của ngành Công nghệ thông tin trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo điểm thi THPT của ngành Công nghệ thông tin là 17,5 điểm năm 2023; 17 điểm năm 2024; và 16 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_027",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo học bạ của ngành Công nghệ thông tin trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo học bạ của ngành Công nghệ thông tin là 25 điểm năm 2023; 25 điểm năm 2024; và 21,67 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_028",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo điểm thi THPT của ngành Công nghệ kỹ thuật ô tô trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo điểm thi THPT của ngành Công nghệ kỹ thuật ô tô là 17 điểm năm 2023; 17 điểm năm 2024; và 18 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_029",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo học bạ của ngành Công nghệ kỹ thuật ô tô trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo học bạ của ngành Công nghệ kỹ thuật ô tô là 24 điểm năm 2023; 25 điểm năm 2024; và 23,17 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_030",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo điểm thi THPT của ngành Ngôn ngữ Trung Quốc năm 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo điểm thi THPT của ngành Ngôn ngữ Trung Quốc là 22 điểm ở cả năm 2024 và năm 2025.",
+      "source_files": [
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_031",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo học bạ của ngành Ngôn ngữ Trung Quốc năm 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo học bạ của ngành Ngôn ngữ Trung Quốc là 27 điểm năm 2024 và 25,83 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_032",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo điểm thi THPT của ngành Sư phạm công nghệ trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo điểm thi THPT của ngành Sư phạm công nghệ là 26 điểm năm 2023; 19 điểm năm 2024; và 23 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_033",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo học bạ của ngành Sư phạm công nghệ trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo học bạ của ngành Sư phạm công nghệ là 29 điểm năm 2023; 26,5 điểm năm 2024; và 26,5 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_034",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo điểm thi THPT của ngành Quản trị kinh doanh trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo điểm thi THPT của ngành Quản trị kinh doanh là 15 điểm năm 2023; 16 điểm năm 2024; và 15 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_035",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Điểm chuẩn theo học bạ của ngành Quản trị kinh doanh trong các năm 2023, 2024 và 2025 là bao nhiêu?",
+      "reference_answer": "Điểm chuẩn theo học bạ của ngành Quản trị kinh doanh là 20 điểm năm 2023; 23 điểm năm 2024; và 20,83 điểm năm 2025.",
+      "source_files": [
+        "Điểm 2023.md",
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_036",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "So với năm 2024, bảng điểm chuẩn năm 2025 có thêm những ngành nào mới?",
+      "reference_answer": "So với bảng điểm chuẩn năm 2024, dữ liệu năm 2025 có thêm các ngành Công nghệ kỹ thuật điện tử - viễn thông, Kỹ thuật Robot và Công nghệ giáo dục.",
+      "source_files": [
+        "Điểm 2024.md",
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_037",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Năm 2025 ngành nào có điểm chuẩn theo điểm thi THPT cao nhất?",
+      "reference_answer": "Trong bảng điểm chuẩn năm 2025, ngành có điểm chuẩn theo điểm thi THPT cao nhất là Sư phạm công nghệ với 23 điểm.",
+      "source_files": [
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_038",
+      "category": "diem_chuan",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Năm 2025 ngành nào có điểm chuẩn theo học bạ cao nhất?",
+      "reference_answer": "Trong bảng điểm chuẩn năm 2025, ngành có điểm chuẩn theo học bạ cao nhất là Sư phạm công nghệ với 26,5 điểm.",
+      "source_files": [
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_039",
+      "category": "diem_chuan_dgnl",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Năm 2024, điểm chuẩn HSA của các ngành Công nghệ thông tin, Khoa học máy tính và Kỹ thuật phần mềm là bao nhiêu?",
+      "reference_answer": "Trong bảng điểm thi đánh giá năng lực, đánh giá tư duy năm 2024, cả ba ngành Công nghệ thông tin, Khoa học máy tính và Kỹ thuật phần mềm đều có mức điểm chuẩn HSA là 65.",
+      "source_files": [
+        "Điểm 2024.md"
+      ]
+    },
+    {
+      "id": "sample_040",
+      "category": "diem_chuan_dgnl",
+      "difficulty": "medium",
+      "muc_do": "trung_binh",
+      "question": "Năm 2025, điểm HSA của ngành Công nghệ kỹ thuật điện, điện tử và Sư phạm công nghệ là bao nhiêu?",
+      "reference_answer": "Theo bảng điểm chuẩn năm 2025, ngành Công nghệ kỹ thuật điện, điện tử có điểm HSA là 13, còn ngành Sư phạm công nghệ có điểm HSA là 16.",
+      "source_files": [
+        "Điểm 2025.md"
+      ]
+    },
+    {
+      "id": "sample_041",
+      "category": "faq_dao_tao",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Sinh viên có được tham gia dự án thực tế trong quá trình học không, và thường từ năm mấy?",
+      "reference_answer": "Theo dữ liệu FAQ, UTEHY đào tạo theo định hướng ứng dụng với gần 40% chương trình là thực hành, thí nghiệm và thực tập. Sinh viên thường được tham gia các dự án thực tế từ năm 2 hoặc năm 3 tùy ngành, thông qua học phần thực hành hoặc thực tập tại doanh nghiệp.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_042",
+      "category": "faq_tu_van",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Nếu muốn được tư vấn trực tiếp thì nên liên hệ ở đâu?",
+      "reference_answer": "Theo dữ liệu FAQ, thí sinh có thể đến Bộ phận Tuyển sinh tại cơ sở 1 của trường ở xã Dân Tiến, huyện Khoái Châu, tỉnh Hưng Yên; hoặc liên hệ qua website https://tuyensinh.utehy.edu.vn và email adtrangedu@gmail.com để được hỗ trợ.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_043",
+      "category": "faq_hoc_ba",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Thí sinh đã tốt nghiệp THPT từ năm trước muốn xét học bạ thì cần điều kiện gì?",
+      "reference_answer": "Theo dữ liệu FAQ, thí sinh đã tốt nghiệp các năm trước vẫn có thể xét học bạ vào trường. Điều kiện chung là tổng điểm 3 môn trong tổ hợp xét tuyển của lớp 11 hoặc lớp 12 cộng điểm ưu tiên đạt từ 19,0 trở lên. Riêng ngành Sư phạm công nghệ và Sư phạm tiếng Anh yêu cầu học lực lớp 12 loại giỏi hoặc điểm xét tốt nghiệp THPT từ 8,0 trở lên.",
+      "source_files": [
+        "qa_fb.md",
+        "tuyen_sinh_247.md"
+      ]
+    },
+    {
+      "id": "sample_044",
+      "category": "faq_hoc_ba",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Đăng ký xét học bạ có phải đăng ký ngay trên cổng Bộ Giáo dục và Đào tạo từ đầu không?",
+      "reference_answer": "Theo dữ liệu FAQ, thí sinh có thể nộp hồ sơ xét học bạ trực tiếp hoặc trực tuyến qua website của trường trước. Sau đó, ở giai đoạn đăng ký nguyện vọng toàn quốc, thí sinh mới đăng ký nguyện vọng trên cổng thông tin của Bộ Giáo dục và Đào tạo để xác nhận kết quả trúng tuyển.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_045",
+      "category": "faq_viec_lam",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Nhà trường có hỗ trợ kết nối việc làm cho sinh viên không, và tỷ lệ có việc làm sau 1 năm là bao nhiêu?",
+      "reference_answer": "Theo dữ liệu FAQ, trường có chương trình kết nối với doanh nghiệp để hỗ trợ sinh viên thực tập và tìm việc làm. Tỷ lệ sinh viên có việc làm sau 1 năm tốt nghiệp là 92,7%, trong đó một số ngành như Công nghệ thông tin và Kỹ thuật ô tô đạt 100%.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_046",
+      "category": "faq_nganh_hoc",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Theo dữ liệu FAQ, những ngành nào được xem là thế mạnh của trường?",
+      "reference_answer": "Theo dữ liệu FAQ, các ngành thế mạnh của trường gồm Công nghệ thông tin, Kỹ thuật cơ điện tử, Kỹ thuật tự động hóa và Kỹ thuật ô tô. Đây là các ngành có nhu cầu nhân lực cao và tỷ lệ có việc làm tốt sau tốt nghiệp.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_047",
+      "category": "hoc_bong",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Trường có những loại học bổng nào và điều kiện nhận học bổng ra sao?",
+      "reference_answer": "Theo dữ liệu FAQ, UTEHY có quỹ học bổng hơn 10 tỷ đồng mỗi năm, gồm học bổng khuyến khích học tập, học bổng từ doanh nghiệp và học bổng cho lớp sinh viên tài năng. Điều kiện tham khảo để nhận học bổng là kết quả học tập tốt, tham gia hoạt động ngoại khóa, không vi phạm nội quy; riêng học bổng khuyến khích học tập được nêu với mức điểm trung bình học kỳ từ 3,2/4,0 trở lên.",
+      "source_files": [
+        "qa_fb.md",
+        "Thông báo tuyển sinh đại học chính quy năm 2026.txt"
+      ]
+    },
+    {
+      "id": "sample_048",
+      "category": "doi_song_sinh_vien",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Trường có những câu lạc bộ hoặc hoạt động ngoại khóa nào giúp sinh viên phát triển kỹ năng mềm?",
+      "reference_answer": "Theo dữ liệu FAQ, trường có nhiều câu lạc bộ như Câu lạc bộ Công nghệ thông tin, Câu lạc bộ Kỹ thuật ô tô, Câu lạc bộ Tiếng Anh cùng các đội văn nghệ và thể thao. Hoạt động ngoại khóa gồm hội thảo, cuộc thi kỹ năng và chương trình tình nguyện, hỗ trợ phát triển kỹ năng giao tiếp, làm việc nhóm và lãnh đạo.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_049",
+      "category": "faq_dang_ky_nhieu_phuong_thuc",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Nếu một nguyện vọng muốn xét bằng nhiều phương thức như học bạ, điểm thi THPT, V-SAT, HSA thì đăng ký như thế nào?",
+      "reference_answer": "Theo dữ liệu FAQ, thí sinh có thể đăng ký nhiều phương thức xét tuyển cho cùng một nguyện vọng trên cổng thông tin tuyển sinh của Bộ Giáo dục và Đào tạo. Hệ thống sẽ xét theo phương thức có kết quả phù hợp và cao nhất nếu thí sinh đủ điều kiện. Riêng với xét học bạ, thí sinh vẫn cần nộp hồ sơ riêng cho trường theo hướng dẫn.",
+      "source_files": [
+        "qa_fb.md"
+      ]
+    },
+    {
+      "id": "sample_050",
+      "category": "faq_dgnl",
+      "difficulty": "hard",
+      "muc_do": "kho",
+      "question": "Trường có sử dụng kết quả bài thi đánh giá năng lực SPT của Đại học Sư phạm Hà Nội để xét tuyển không?",
+      "reference_answer": "Theo dữ liệu FAQ, đề án tuyển sinh 2024 của trường chỉ nêu việc sử dụng kết quả kỳ thi đánh giá năng lực HSA của Đại học Quốc gia Hà Nội và kỳ thi đánh giá tư duy TSA của Đại học Bách khoa Hà Nội. Không có thông tin cho thấy trường sử dụng bài thi đánh giá năng lực SPT của Đại học Sư phạm Hà Nội.",
+      "source_files": [
+        "qa_fb.md",
+        "tuyen_sinh_247.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,432 @@
+{
+  "dataset_name": "utehy_rewriter_test_40",
+  "description": "Bộ dữ liệu đánh giá module QueryReflection — 40 mẫu, 10 mỗi loại",
+  "version": "1.0",
+  "types": {
+    "context_dependent": 10,
+    "independent": 10,
+    "smalltalk": 10,
+    "no_history": 10
+  },
+  "samples": [
+    {
+      "id": "rw_001",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành Công nghệ thông tin năm 2025 lấy bao nhiêu điểm thi THPT?"},
+        {"role": "assistant", "content": "Điểm chuẩn ngành CNTT 2025 theo điểm thi THPT là 16 điểm."}
+      ],
+      "current_query": "Còn theo học bạ thì sao?",
+      "expected_standalone": "Điểm chuẩn ngành Công nghệ thông tin năm 2025 theo xét học bạ là bao nhiêu?",
+      "note": "Đại từ 'còn' và 'theo học bạ' cần liên kết với ngành CNTT 2025"
+    },
+    {
+      "id": "rw_002",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Học phí ngành Kỹ thuật cơ điện tử năm 2025 là bao nhiêu?"},
+        {"role": "assistant", "content": "Học phí dự kiến khoảng 1.790.000 đồng/tháng."}
+      ],
+      "current_query": "Ngành đó có học bổng không?",
+      "expected_standalone": "Ngành Kỹ thuật cơ điện tử có học bổng không?",
+      "note": "'Ngành đó' là đại từ thay thế cho 'Kỹ thuật cơ điện tử'"
+    },
+    {
+      "id": "rw_003",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Trường có những ngành kỹ thuật nào?"},
+        {"role": "assistant", "content": "Trường có các ngành: Cơ điện tử, Ô tô, Tự động hóa, Điện-Điện tử..."},
+        {"role": "user",      "content": "Ngành Cơ điện tử điểm chuẩn 2025 là bao nhiêu?"},
+        {"role": "assistant", "content": "Điểm chuẩn ngành Cơ điện tử 2025 theo THPT là 17 điểm."}
+      ],
+      "current_query": "Thế còn ngành Tự động hóa?",
+      "expected_standalone": "Điểm chuẩn ngành Tự động hóa năm 2025 là bao nhiêu?",
+      "note": "Cần suy ra cả chủ đề (điểm chuẩn 2025) lẫn ngành cụ thể"
+    },
+    {
+      "id": "rw_004",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Các phương thức tuyển sinh năm 2026 của UTEHY là gì?"},
+        {"role": "assistant", "content": "Có 4 phương thức: điểm thi THPT, xét học bạ, tuyển thẳng, và HSA/V-SAT/TSA."}
+      ],
+      "current_query": "Phương thức đầu tiên có điều kiện gì không?",
+      "expected_standalone": "Phương thức xét tuyển theo điểm thi THPT năm 2026 có điều kiện gì?",
+      "note": "'Phương thức đầu tiên' cần được giải mã từ context"
+    },
+    {
+      "id": "rw_005",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Điểm chuẩn xét học bạ của ngành Sư phạm công nghệ năm 2025 là bao nhiêu?"},
+        {"role": "assistant", "content": "Điểm chuẩn học bạ ngành Sư phạm công nghệ 2025 là 26,5 điểm."}
+      ],
+      "current_query": "Nó có được miễn học phí không?",
+      "expected_standalone": "Ngành Sư phạm công nghệ có được miễn học phí không?",
+      "note": "'Nó' là đại từ thay thế cho 'ngành Sư phạm công nghệ'"
+    },
+    {
+      "id": "rw_006",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Mã trường UTEHY là gì?"},
+        {"role": "assistant", "content": "Mã trường là SKH."},
+        {"role": "user",      "content": "Trường UTEHY được thành lập năm nào?"},
+        {"role": "assistant", "content": "Trường thành lập ngày 21 tháng 12 năm 1966."}
+      ],
+      "current_query": "Khi đó tên trường là gì?",
+      "expected_standalone": "Tên trường UTEHY khi mới thành lập năm 1966 là gì?",
+      "note": "'Khi đó' chỉ thời điểm năm 1966 đã được đề cập"
+    },
+    {
+      "id": "rw_007",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Học phí lớp giảng dạy bằng tiếng Anh tại UTEHY là bao nhiêu?"},
+        {"role": "assistant", "content": "Học phí lớp tiếng Anh là 2.400.000 đồng/sinh viên/tháng."}
+      ],
+      "current_query": "So với lớp thường đắt hơn bao nhiêu?",
+      "expected_standalone": "Học phí lớp giảng dạy bằng tiếng Anh đắt hơn lớp thường bao nhiêu tiền?",
+      "note": "Cần kết hợp 2 thông tin: học phí lớp tiếng Anh và so sánh với lớp thường"
+    },
+    {
+      "id": "rw_008",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành Kế toán tại UTEHY xét theo tổ hợp môn nào?"},
+        {"role": "assistant", "content": "Ngành Kế toán xét theo tổ hợp A00, A01, D01, D07."}
+      ],
+      "current_query": "Ngành đó điểm chuẩn năm 2024 bao nhiêu?",
+      "expected_standalone": "Điểm chuẩn ngành Kế toán tại UTEHY năm 2024 là bao nhiêu?",
+      "note": "'Ngành đó' là đại từ cho 'ngành Kế toán'"
+    },
+    {
+      "id": "rw_009",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Thời gian nộp hồ sơ xét tuyển học bạ năm 2026 là khi nào?"},
+        {"role": "assistant", "content": "Thời gian nộp hồ sơ xét học bạ từ tháng 3 đến tháng 6 năm 2026."}
+      ],
+      "current_query": "Sau đó thì thi hay phỏng vấn không?",
+      "expected_standalone": "Sau khi nộp hồ sơ xét học bạ năm 2026, thí sinh có phải thi hay phỏng vấn không?",
+      "note": "'Sau đó' chỉ bước tiếp theo sau giai đoạn nộp hồ sơ xét học bạ"
+    },
+    {
+      "id": "rw_010",
+      "type": "context_dependent",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành Quản trị kinh doanh học mấy năm?"},
+        {"role": "assistant", "content": "Ngành Quản trị kinh doanh đào tạo 4 năm."},
+        {"role": "user",      "content": "Ra trường làm gì được?"},
+        {"role": "assistant", "content": "Có thể làm quản lý doanh nghiệp, chuyên viên marketing, phân tích kinh doanh..."}
+      ],
+      "current_query": "Học ở cơ sở nào?",
+      "expected_standalone": "Ngành Quản trị kinh doanh tại UTEHY đào tạo ở cơ sở nào?",
+      "note": "'Học ở cơ sở nào' cần gắn với ngành Quản trị kinh doanh đã đề cập"
+    },
+
+    {
+      "id": "rw_011",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Xin chào, cho hỏi thông tin tuyển sinh."},
+        {"role": "assistant", "content": "Xin chào! Bạn muốn biết thông tin gì về tuyển sinh ạ?"}
+      ],
+      "current_query": "Năm 2026 trường tuyển bao nhiêu chỉ tiêu?",
+      "expected_standalone": "Năm 2026 trường UTEHY tuyển bao nhiêu chỉ tiêu?",
+      "note": "Câu đã đủ thông tin, không cần viết lại hay thêm ngữ cảnh"
+    },
+    {
+      "id": "rw_012",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Điểm chuẩn CNTT 2024?"},
+        {"role": "assistant", "content": "17 điểm theo THPT."}
+      ],
+      "current_query": "Mã trường UTEHY là gì?",
+      "expected_standalone": "Mã trường UTEHY là gì?",
+      "note": "Chủ đề hoàn toàn khác, câu đã rõ ràng và độc lập"
+    },
+    {
+      "id": "rw_013",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Học phí nhóm ngành kỹ thuật là bao nhiêu?"},
+        {"role": "assistant", "content": "1.790.000 đồng/tháng."}
+      ],
+      "current_query": "Hồ sơ xét học bạ cần những giấy tờ gì?",
+      "expected_standalone": "Hồ sơ xét học bạ tại UTEHY cần những giấy tờ gì?",
+      "note": "Chủ đề khác hoàn toàn, câu hỏi tự đủ nghĩa"
+    },
+    {
+      "id": "rw_014",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Trường nâng cấp lên đại học năm nào?"},
+        {"role": "assistant", "content": "Năm 2003 trường được nâng cấp thành trường đại học."}
+      ],
+      "current_query": "Sinh viên UTEHY có tỷ lệ việc làm sau tốt nghiệp như thế nào?",
+      "expected_standalone": "Sinh viên UTEHY có tỷ lệ việc làm sau tốt nghiệp như thế nào?",
+      "note": "Câu hoàn toàn tự đủ nghĩa, không liên quan lịch sử"
+    },
+    {
+      "id": "rw_015",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "UTEHY có bao nhiêu khoa?"},
+        {"role": "assistant", "content": "Trường có 9 khoa đào tạo."}
+      ],
+      "current_query": "Trường UTEHY có bao nhiêu ngành đào tạo đại học?",
+      "expected_standalone": "Trường UTEHY có bao nhiêu ngành đào tạo đại học?",
+      "note": "Câu đã bao gồm tên trường và nội dung đầy đủ"
+    },
+    {
+      "id": "rw_016",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành Sư phạm có học bổng không?"},
+        {"role": "assistant", "content": "Sinh viên Sư phạm được miễn 100% học phí và hỗ trợ 3,63 triệu/tháng."}
+      ],
+      "current_query": "Địa chỉ trường UTEHY ở đâu?",
+      "expected_standalone": "Địa chỉ trường UTEHY ở đâu?",
+      "note": "Câu hỏi địa lý độc lập hoàn toàn với lịch sử"
+    },
+    {
+      "id": "rw_017",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành Điện tử viễn thông học khối gì?"},
+        {"role": "assistant", "content": "Xét theo tổ hợp A00, A01."}
+      ],
+      "current_query": "Điều kiện xét tuyển thẳng vào UTEHY là gì?",
+      "expected_standalone": "Điều kiện xét tuyển thẳng vào UTEHY là gì?",
+      "note": "Câu hoàn toàn độc lập với lịch sử về ngành Điện tử"
+    },
+    {
+      "id": "rw_018",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Trường có cơ sở ở Hải Phòng không?"},
+        {"role": "assistant", "content": "Có, trường có cơ sở đào tạo tại Hải Phòng."}
+      ],
+      "current_query": "Học phí ngành Kế toán năm học 2025-2026 là bao nhiêu?",
+      "expected_standalone": "Học phí ngành Kế toán tại UTEHY năm học 2025-2026 là bao nhiêu?",
+      "note": "Câu đã chứa đủ thông tin về ngành và năm học"
+    },
+    {
+      "id": "rw_019",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành Kỹ thuật phần mềm điểm chuẩn bao nhiêu?"},
+        {"role": "assistant", "content": "Điểm chuẩn KTPM 2025 theo THPT là 18 điểm."}
+      ],
+      "current_query": "Thời hạn nộp hồ sơ xét tuyển học bạ đợt 1 năm 2026 là khi nào?",
+      "expected_standalone": "Thời hạn nộp hồ sơ xét tuyển học bạ đợt 1 năm 2026 tại UTEHY là khi nào?",
+      "note": "Câu đã đủ thời gian, loại hồ sơ và năm — độc lập với lịch sử"
+    },
+    {
+      "id": "rw_020",
+      "type": "independent",
+      "chat_history": [
+        {"role": "user",      "content": "Có chương trình đào tạo tiên tiến không?"},
+        {"role": "assistant", "content": "Có, trường có chương trình tiên tiến và lớp chất lượng cao."}
+      ],
+      "current_query": "Ngành Công nghệ thông tin xét tuyển theo tổ hợp môn nào?",
+      "expected_standalone": "Ngành Công nghệ thông tin tại UTEHY xét tuyển theo tổ hợp môn nào?",
+      "note": "Câu đã bao gồm tên ngành đầy đủ, không phụ thuộc lịch sử"
+    },
+
+    {
+      "id": "rw_021",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Điểm chuẩn ngành Kế toán?"},
+        {"role": "assistant", "content": "Điểm chuẩn ngành Kế toán 2025 là 15 điểm."}
+      ],
+      "current_query": "Cảm ơn bạn",
+      "expected_standalone": "Cảm ơn bạn",
+      "note": "Small-talk cảm ơn — phải giữ nguyên, không viết lại"
+    },
+    {
+      "id": "rw_022",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Học phí CNTT là bao nhiêu?"},
+        {"role": "assistant", "content": "1.790.000 đồng/tháng."}
+      ],
+      "current_query": "Ok, cảm ơn",
+      "expected_standalone": "Ok, cảm ơn",
+      "note": "Small-talk ngắn — phải giữ nguyên"
+    },
+    {
+      "id": "rw_023",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Trường có ký túc xá không?"},
+        {"role": "assistant", "content": "Trường có ký túc xá cho sinh viên ngoại tỉnh."}
+      ],
+      "current_query": "Xin chào bạn ơi",
+      "expected_standalone": "Xin chào bạn ơi",
+      "note": "Lời chào sau khi đã chat — phải giữ nguyên"
+    },
+    {
+      "id": "rw_024",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Điều kiện học bổng tại UTEHY?"},
+        {"role": "assistant", "content": "Sinh viên đạt GPA từ 3.2 trở lên được xét học bổng."}
+      ],
+      "current_query": "Được rồi, tôi hiểu rồi ạ",
+      "expected_standalone": "Được rồi, tôi hiểu rồi ạ",
+      "note": "Câu xác nhận hiểu — không có nội dung cần truy hồi"
+    },
+    {
+      "id": "rw_025",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành nào có cơ hội việc làm tốt nhất?"},
+        {"role": "assistant", "content": "CNTT và Kỹ thuật cơ điện tử hiện có tỷ lệ việc làm cao."}
+      ],
+      "current_query": "Cảm ơn nhiều nhé!",
+      "expected_standalone": "Cảm ơn nhiều nhé!",
+      "note": "Lời cảm ơn với dấu chấm than — phải giữ nguyên"
+    },
+    {
+      "id": "rw_026",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Mã xét tuyển ngành CNTT?"},
+        {"role": "assistant", "content": "Mã xét tuyển CNTT là SKH-7480201."}
+      ],
+      "current_query": "Tạm biệt bạn nhé",
+      "expected_standalone": "Tạm biệt bạn nhé",
+      "note": "Lời tạm biệt kết thúc hội thoại — không viết lại"
+    },
+    {
+      "id": "rw_027",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Trường có hỗ trợ chỗ ở cho sinh viên không?"},
+        {"role": "assistant", "content": "Có, sinh viên có thể đăng ký ký túc xá."}
+      ],
+      "current_query": "Hi bạn",
+      "expected_standalone": "Hi bạn",
+      "note": "Lời chào tiếng Anh — phải giữ nguyên"
+    },
+    {
+      "id": "rw_028",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Phương thức xét HSA là gì?"},
+        {"role": "assistant", "content": "HSA là xét tuyển theo đánh giá năng lực của Đại học Quốc gia Hà Nội."}
+      ],
+      "current_query": "Ok bạn ơi, mình hiểu rồi",
+      "expected_standalone": "Ok bạn ơi, mình hiểu rồi",
+      "note": "Câu xác nhận thân mật — không có thông tin truy hồi"
+    },
+    {
+      "id": "rw_029",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Ngành Sư phạm toán có đào tạo không?"},
+        {"role": "assistant", "content": "Trường có ngành Sư phạm Toán học."}
+      ],
+      "current_query": "Vâng, tôi hiểu rồi ạ",
+      "expected_standalone": "Vâng, tôi hiểu rồi ạ",
+      "note": "Câu xác nhận lịch sự — giữ nguyên"
+    },
+    {
+      "id": "rw_030",
+      "type": "smalltalk",
+      "chat_history": [
+        {"role": "user",      "content": "Trường liên kết đào tạo với nước ngoài không?"},
+        {"role": "assistant", "content": "Có, trường có một số chương trình liên kết với đối tác quốc tế."}
+      ],
+      "current_query": "Thanks nhé bạn",
+      "expected_standalone": "Thanks nhé bạn",
+      "note": "Cảm ơn tiếng Anh kết hợp tiếng Việt — giữ nguyên"
+    },
+
+    {
+      "id": "rw_031",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Điểm chuẩn ngành CNTT năm 2025 là bao nhiêu?",
+      "expected_standalone": "Điểm chuẩn ngành CNTT năm 2025 là bao nhiêu?",
+      "note": "Không có lịch sử — module nên skip và trả về nguyên câu"
+    },
+    {
+      "id": "rw_032",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Trường UTEHY có những ngành nào thuộc khối kinh tế?",
+      "expected_standalone": "Trường UTEHY có những ngành nào thuộc khối kinh tế?",
+      "note": "Không có lịch sử — trả về nguyên câu"
+    },
+    {
+      "id": "rw_033",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Học phí trường UTEHY năm học 2025-2026 là bao nhiêu?",
+      "expected_standalone": "Học phí trường UTEHY năm học 2025-2026 là bao nhiêu?",
+      "note": "Câu đầy đủ thông tin, không có lịch sử"
+    },
+    {
+      "id": "rw_034",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Phương thức xét tuyển của UTEHY năm 2026 gồm những gì?",
+      "expected_standalone": "Phương thức xét tuyển của UTEHY năm 2026 gồm những gì?",
+      "note": "Không có lịch sử — giữ nguyên"
+    },
+    {
+      "id": "rw_035",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Ngành Kỹ thuật phần mềm có đào tạo tại UTEHY không?",
+      "expected_standalone": "Ngành Kỹ thuật phần mềm có đào tạo tại UTEHY không?",
+      "note": "Không có lịch sử — giữ nguyên"
+    },
+    {
+      "id": "rw_036",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Cách đăng ký xét tuyển online vào UTEHY như thế nào?",
+      "expected_standalone": "Cách đăng ký xét tuyển online vào UTEHY như thế nào?",
+      "note": "Câu đầy đủ, không cần ngữ cảnh thêm"
+    },
+    {
+      "id": "rw_037",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Trường UTEHY được thành lập năm nào?",
+      "expected_standalone": "Trường UTEHY được thành lập năm nào?",
+      "note": "Không có lịch sử — trả về nguyên câu"
+    },
+    {
+      "id": "rw_038",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Sinh viên ngoại tỉnh có được ở ký túc xá không?",
+      "expected_standalone": "Sinh viên ngoại tỉnh có được ở ký túc xá tại UTEHY không?",
+      "note": "Không có lịch sử — giữ nguyên"
+    },
+    {
+      "id": "rw_039",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Điều kiện xét học bổng tại UTEHY là gì?",
+      "expected_standalone": "Điều kiện xét học bổng tại UTEHY là gì?",
+      "note": "Không có lịch sử — giữ nguyên"
+    },
+    {
+      "id": "rw_040",
+      "type": "no_history",
+      "chat_history": [],
+      "current_query": "Ngành Quản trị kinh doanh của UTEHY có chương trình liên kết quốc tế không?",
+      "expected_standalone": "Ngành Quản trị kinh doanh của UTEHY có chương trình liên kết quốc tế không?",
+      "note": "Câu đầy đủ thông tin, không có lịch sử"
+    }
+  ]
+}

@@ -1,0 +1,473 @@
+{
+  "summary": {
+    "total": 40,
+    "correct_behavior_rate": 0.875,
+    "avg_judge_score": 4.675,
+    "avg_latency_ms": 536.8257750000794,
+    "p95_latency_ms": 1598.279800000455
+  },
+  "by_type": {
+    "context_dependent": {
+      "count": 10,
+      "correct": 10,
+      "avg_score": 4.2
+    },
+    "independent": {
+      "count": 10,
+      "correct": 5,
+      "avg_score": 4.5
+    },
+    "smalltalk": {
+      "count": 10,
+      "correct": 10,
+      "avg_score": 5.0
+    },
+    "no_history": {
+      "count": 10,
+      "correct": 10,
+      "avg_score": 5.0
+    }
+  },
+  "samples": [
+    {
+      "id": "rw_001",
+      "type": "context_dependent",
+      "original": "Còn theo học bạ thì sao?",
+      "rewritten": "Còn theo học bạ thì ngành Công nghệ thông tin năm 2025 lấy bao nhiêu điểm?",
+      "expected": "Điểm chuẩn ngành Công nghệ thông tin năm 2025 theo xét học bạ là bao nhiêu?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 2371.57599999955
+    },
+    {
+      "id": "rw_002",
+      "type": "context_dependent",
+      "original": "Ngành đó có học bổng không?",
+      "rewritten": "Ngành Kỹ thuật cơ điện tử có học bổng không?",
+      "expected": "Ngành Kỹ thuật cơ điện tử có học bổng không?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 814.8458000014216
+    },
+    {
+      "id": "rw_003",
+      "type": "context_dependent",
+      "original": "Thế còn ngành Tự động hóa?",
+      "rewritten": "Ngành Tự động hóa điểm chuẩn 2025 là bao nhiêu?",
+      "expected": "Điểm chuẩn ngành Tự động hóa năm 2025 là bao nhiêu?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 860.2510999990045
+    },
+    {
+      "id": "rw_004",
+      "type": "context_dependent",
+      "original": "Phương thức đầu tiên có điều kiện gì không?",
+      "rewritten": "Phương thức đầu tiên trong tuyển sinh năm 2026 của UTEHY có điều kiện gì không?",
+      "expected": "Phương thức xét tuyển theo điểm thi THPT năm 2026 có điều kiện gì?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 1242.5648999997065
+    },
+    {
+      "id": "rw_005",
+      "type": "context_dependent",
+      "original": "Nó có được miễn học phí không?",
+      "rewritten": "Ngành Sư phạm công nghệ năm 2025 có được miễn học phí không?",
+      "expected": "Ngành Sư phạm công nghệ có được miễn học phí không?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 1093.670000000202
+    },
+    {
+      "id": "rw_006",
+      "type": "context_dependent",
+      "original": "Khi đó tên trường là gì?",
+      "rewritten": "Khi trường UTEHY được thành lập, tên trường là gì?",
+      "expected": "Tên trường UTEHY khi mới thành lập năm 1966 là gì?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 842.0415999989928
+    },
+    {
+      "id": "rw_007",
+      "type": "context_dependent",
+      "original": "So với lớp thường đắt hơn bao nhiêu?",
+      "rewritten": "So với lớp thường, học phí lớp giảng dạy bằng tiếng Anh tại UTEHY đắt hơn bao nhiêu?",
+      "expected": "Học phí lớp giảng dạy bằng tiếng Anh đắt hơn lớp thường bao nhiêu tiền?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 1170.8601000009367
+    },
+    {
+      "id": "rw_008",
+      "type": "context_dependent",
+      "original": "Ngành đó điểm chuẩn năm 2024 bao nhiêu?",
+      "rewritten": "Ngành Kế toán tại UTEHY điểm chuẩn năm 2024 bao nhiêu?",
+      "expected": "Điểm chuẩn ngành Kế toán tại UTEHY năm 2024 là bao nhiêu?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 1210.4597000015929
+    },
+    {
+      "id": "rw_009",
+      "type": "context_dependent",
+      "original": "Sau đó thì thi hay phỏng vấn không?",
+      "rewritten": "Sau thời gian nộp hồ sơ xét tuyển học bạ năm 2026, có thi hay phỏng vấn không?",
+      "expected": "Sau khi nộp hồ sơ xét học bạ năm 2026, thí sinh có phải thi hay phỏng vấn không?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 828.4082000009221
+    },
+    {
+      "id": "rw_010",
+      "type": "context_dependent",
+      "original": "Học ở cơ sở nào?",
+      "rewritten": "Học ở cơ sở nào cho ngành Quản trị kinh doanh?",
+      "expected": "Ngành Quản trị kinh doanh tại UTEHY đào tạo ở cơ sở nào?",
+      "was_rewritten": true,
+      "correct_behavior": true,
+      "judge_score": 4,
+      "latency_ms": 959.9751999994623
+    },
+    {
+      "id": "rw_011",
+      "type": "independent",
+      "original": "Năm 2026 trường tuyển bao nhiêu chỉ tiêu?",
+      "rewritten": "Năm 2026, trường tuyển bao nhiêu chỉ tiêu?",
+      "expected": "Năm 2026 trường UTEHY tuyển bao nhiêu chỉ tiêu?",
+      "was_rewritten": true,
+      "correct_behavior": false,
+      "judge_score": 4,
+      "latency_ms": 1043.7525999986974
+    },
+    {
+      "id": "rw_012",
+      "type": "independent",
+      "original": "Mã trường UTEHY là gì?",
+      "rewritten": "Mã trường UTEHY là gì?",
+      "expected": "Mã trường UTEHY là gì?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 783.5704999997688
+    },
+    {
+      "id": "rw_013",
+      "type": "independent",
+      "original": "Hồ sơ xét học bạ cần những giấy tờ gì?",
+      "rewritten": "Hồ sơ xét học bạ cần những giấy tờ gì để đăng ký vào nhóm ngành kỹ thuật?",
+      "expected": "Hồ sơ xét học bạ tại UTEHY cần những giấy tờ gì?",
+      "was_rewritten": true,
+      "correct_behavior": false,
+      "judge_score": 4,
+      "latency_ms": 776.7327999990812
+    },
+    {
+      "id": "rw_014",
+      "type": "independent",
+      "original": "Sinh viên UTEHY có tỷ lệ việc làm sau tốt nghiệp như thế nào?",
+      "rewritten": "Sinh viên UTEHY có tỷ lệ việc làm sau tốt nghiệp như thế nào?",
+      "expected": "Sinh viên UTEHY có tỷ lệ việc làm sau tốt nghiệp như thế nào?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 1074.3290000009438
+    },
+    {
+      "id": "rw_015",
+      "type": "independent",
+      "original": "Trường UTEHY có bao nhiêu ngành đào tạo đại học?",
+      "rewritten": "Trường UTEHY có bao nhiêu ngành đào tạo đại học?",
+      "expected": "Trường UTEHY có bao nhiêu ngành đào tạo đại học?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 874.6759999994538
+    },
+    {
+      "id": "rw_016",
+      "type": "independent",
+      "original": "Địa chỉ trường UTEHY ở đâu?",
+      "rewritten": "Địa chỉ trường UTEHY ở đâu?",
+      "expected": "Địa chỉ trường UTEHY ở đâu?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 829.9900000001799
+    },
+    {
+      "id": "rw_017",
+      "type": "independent",
+      "original": "Điều kiện xét tuyển thẳng vào UTEHY là gì?",
+      "rewritten": "Điều kiện xét tuyển thẳng vào trường Đại học Kỹ thuật - Công nghệ Hưng Yên (UTEHY) là gì?",
+      "expected": "Điều kiện xét tuyển thẳng vào UTEHY là gì?",
+      "was_rewritten": true,
+      "correct_behavior": false,
+      "judge_score": 4,
+      "latency_ms": 1598.279800000455
+    },
+    {
+      "id": "rw_018",
+      "type": "independent",
+      "original": "Học phí ngành Kế toán năm học 2025-2026 là bao nhiêu?",
+      "rewritten": "Học phí ngành Kế toán năm học 2025-2026 là bao nhiêu tại trường có cơ sở ở Hải Phòng?",
+      "expected": "Học phí ngành Kế toán tại UTEHY năm học 2025-2026 là bao nhiêu?",
+      "was_rewritten": true,
+      "correct_behavior": false,
+      "judge_score": 4,
+      "latency_ms": 980.6332999996812
+    },
+    {
+      "id": "rw_019",
+      "type": "independent",
+      "original": "Thời hạn nộp hồ sơ xét tuyển học bạ đợt 1 năm 2026 là khi nào?",
+      "rewritten": "Thời hạn nộp hồ sơ xét tuyển học bạ đợt 1 năm 2026 là khi nào?",
+      "expected": "Thời hạn nộp hồ sơ xét tuyển học bạ đợt 1 năm 2026 tại UTEHY là khi nào?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 1223.8959000005707
+    },
+    {
+      "id": "rw_020",
+      "type": "independent",
+      "original": "Ngành Công nghệ thông tin xét tuyển theo tổ hợp môn nào?",
+      "rewritten": "Ngành Công nghệ thông tin xét tuyển theo tổ hợp môn nào trong chương trình đào tạo tiên tiến?",
+      "expected": "Ngành Công nghệ thông tin tại UTEHY xét tuyển theo tổ hợp môn nào?",
+      "was_rewritten": true,
+      "correct_behavior": false,
+      "judge_score": 4,
+      "latency_ms": 891.7069999988598
+    },
+    {
+      "id": "rw_021",
+      "type": "smalltalk",
+      "original": "Cảm ơn bạn",
+      "rewritten": "Cảm ơn bạn",
+      "expected": "Cảm ơn bạn",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.06920000123500358
+    },
+    {
+      "id": "rw_022",
+      "type": "smalltalk",
+      "original": "Ok, cảm ơn",
+      "rewritten": "Ok, cảm ơn",
+      "expected": "Ok, cảm ơn",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.04819999958272092
+    },
+    {
+      "id": "rw_023",
+      "type": "smalltalk",
+      "original": "Xin chào bạn ơi",
+      "rewritten": "Xin chào bạn ơi",
+      "expected": "Xin chào bạn ơi",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.0442000000475673
+    },
+    {
+      "id": "rw_024",
+      "type": "smalltalk",
+      "original": "Được rồi, tôi hiểu rồi ạ",
+      "rewritten": "Được rồi, tôi hiểu rồi ạ",
+      "expected": "Được rồi, tôi hiểu rồi ạ",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.062400000388151966
+    },
+    {
+      "id": "rw_025",
+      "type": "smalltalk",
+      "original": "Cảm ơn nhiều nhé!",
+      "rewritten": "Cảm ơn nhiều nhé!",
+      "expected": "Cảm ơn nhiều nhé!",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.08239999988290947
+    },
+    {
+      "id": "rw_026",
+      "type": "smalltalk",
+      "original": "Tạm biệt bạn nhé",
+      "rewritten": "Tạm biệt bạn nhé",
+      "expected": "Tạm biệt bạn nhé",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.04079999962414149
+    },
+    {
+      "id": "rw_027",
+      "type": "smalltalk",
+      "original": "Hi bạn",
+      "rewritten": "Hi bạn",
+      "expected": "Hi bạn",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.03589999869291205
+    },
+    {
+      "id": "rw_028",
+      "type": "smalltalk",
+      "original": "Ok bạn ơi, mình hiểu rồi",
+      "rewritten": "Ok bạn ơi, mình hiểu rồi",
+      "expected": "Ok bạn ơi, mình hiểu rồi",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.08859999979904387
+    },
+    {
+      "id": "rw_029",
+      "type": "smalltalk",
+      "original": "Vâng, tôi hiểu rồi ạ",
+      "rewritten": "Vâng, tôi hiểu rồi ạ",
+      "expected": "Vâng, tôi hiểu rồi ạ",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.06209999992279336
+    },
+    {
+      "id": "rw_030",
+      "type": "smalltalk",
+      "original": "Thanks nhé bạn",
+      "rewritten": "Thanks nhé bạn",
+      "expected": "Thanks nhé bạn",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.12419999984558672
+    },
+    {
+      "id": "rw_031",
+      "type": "no_history",
+      "original": "Điểm chuẩn ngành CNTT năm 2025 là bao nhiêu?",
+      "rewritten": "Điểm chuẩn ngành CNTT năm 2025 là bao nhiêu?",
+      "expected": "Điểm chuẩn ngành CNTT năm 2025 là bao nhiêu?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.006100000973674469
+    },
+    {
+      "id": "rw_032",
+      "type": "no_history",
+      "original": "Trường UTEHY có những ngành nào thuộc khối kinh tế?",
+      "rewritten": "Trường UTEHY có những ngành nào thuộc khối kinh tế?",
+      "expected": "Trường UTEHY có những ngành nào thuộc khối kinh tế?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.022100000933278352
+    },
+    {
+      "id": "rw_033",
+      "type": "no_history",
+      "original": "Học phí trường UTEHY năm học 2025-2026 là bao nhiêu?",
+      "rewritten": "Học phí trường UTEHY năm học 2025-2026 là bao nhiêu?",
+      "expected": "Học phí trường UTEHY năm học 2025-2026 là bao nhiêu?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.014100000043981709
+    },
+    {
+      "id": "rw_034",
+      "type": "no_history",
+      "original": "Phương thức xét tuyển của UTEHY năm 2026 gồm những gì?",
+      "rewritten": "Phương thức xét tuyển của UTEHY năm 2026 gồm những gì?",
+      "expected": "Phương thức xét tuyển của UTEHY năm 2026 gồm những gì?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.012900000001536682
+    },
+    {
+      "id": "rw_035",
+      "type": "no_history",
+      "original": "Ngành Kỹ thuật phần mềm có đào tạo tại UTEHY không?",
+      "rewritten": "Ngành Kỹ thuật phần mềm có đào tạo tại UTEHY không?",
+      "expected": "Ngành Kỹ thuật phần mềm có đào tạo tại UTEHY không?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.017500000467407517
+    },
+    {
+      "id": "rw_036",
+      "type": "no_history",
+      "original": "Cách đăng ký xét tuyển online vào UTEHY như thế nào?",
+      "rewritten": "Cách đăng ký xét tuyển online vào UTEHY như thế nào?",
+      "expected": "Cách đăng ký xét tuyển online vào UTEHY như thế nào?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.01700000029813964
+    },
+    {
+      "id": "rw_037",
+      "type": "no_history",
+      "original": "Trường UTEHY được thành lập năm nào?",
+      "rewritten": "Trường UTEHY được thành lập năm nào?",
+      "expected": "Trường UTEHY được thành lập năm nào?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.01900000097521115
+    },
+    {
+      "id": "rw_038",
+      "type": "no_history",
+      "original": "Sinh viên ngoại tỉnh có được ở ký túc xá không?",
+      "rewritten": "Sinh viên ngoại tỉnh có được ở ký túc xá không?",
+      "expected": "Sinh viên ngoại tỉnh có được ở ký túc xá tại UTEHY không?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.015800000255694613
+    },
+    {
+      "id": "rw_039",
+      "type": "no_history",
+      "original": "Điều kiện xét học bổng tại UTEHY là gì?",
+      "rewritten": "Điều kiện xét học bổng tại UTEHY là gì?",
+      "expected": "Điều kiện xét học bổng tại UTEHY là gì?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.01610000072105322
+    },
+    {
+      "id": "rw_040",
+      "type": "no_history",
+      "original": "Ngành Quản trị kinh doanh của UTEHY có chương trình liên kết quốc tế không?",
+      "rewritten": "Ngành Quản trị kinh doanh của UTEHY có chương trình liên kết quốc tế không?",
+      "expected": "Ngành Quản trị kinh doanh của UTEHY có chương trình liên kết quốc tế không?",
+      "was_rewritten": false,
+      "correct_behavior": true,
+      "judge_score": 5,
+      "latency_ms": 0.012900000001536682
+    }
+  ]
+}

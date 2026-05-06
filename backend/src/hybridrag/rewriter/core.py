@@ -49,6 +49,13 @@ class QueryReflection:
             "ok",
             "oke",
             "bye",
+            "toi hieu",
+            "co roi",
+            "duoc roi",
+            "vang",
+            "da",
+            "uh",
+            "tam biet",
         }
         self._cache_enabled: bool = self._cache_size > 0 and self._cache_ttl_seconds > 0
         self._cache: TTLCache[str, str] | None = (
@@ -70,8 +77,21 @@ class QueryReflection:
         no_emoji = no_emoji.replace("\u200d", " ").replace("\ufe0f", " ")
         nfd = unicodedata.normalize("NFD", no_emoji)
         no_accent = "".join(ch for ch in nfd if unicodedata.category(ch) != "Mn")
+        # "đ" (U+0111) does not decompose under NFD — transliterate explicitly
+        no_accent = no_accent.replace("\u0111", "d").replace("\u0110", "D")
         no_punct = re.sub(r"[^\w\s]", " ", no_accent)
         return re.sub(r"\s+", " ", no_punct).strip()
+
+    def _is_small_talk(self, normalized: str) -> bool:
+        if normalized in self._small_talk_short_queries:
+            return True
+        words = normalized.split()
+        if len(words) <= 6:
+            for phrase in self._small_talk_short_queries:
+                phrase_words = phrase.split()
+                if words[: len(phrase_words)] == phrase_words:
+                    return True
+        return False
 
     async def _cache_get(self, key: str) -> Optional[str]:
         if not self._cache_enabled or self._cache is None:
@@ -238,7 +258,7 @@ class QueryReflection:
             return current_query
 
         normalized_smalltalk = self._normalize_for_smalltalk(query_text)
-        if normalized_smalltalk in self._small_talk_short_queries:
+        if self._is_small_talk(normalized_smalltalk):
             log.debug("QueryReflection skipped: small-talk short query")
             return current_query
 

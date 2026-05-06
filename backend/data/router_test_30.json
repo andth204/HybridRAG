@@ -1,0 +1,257 @@
+{
+  "dataset_name": "utehy_router_test_30",
+  "description": "Bo du lieu kiem thu danh rieng cho module router, dung de danh gia kha nang phan loai dung giua hai route main_query va chitchat.",
+  "language": "vi",
+  "route_labels": [
+    "main_query",
+    "chitchat"
+  ],
+  "sample_count": 30,
+  "distribution": {
+    "main_query": 15,
+    "chitchat": 15
+  },
+  "evaluation_note": "Voi router hien tai, chi tieu danh gia chinh la phan loai dung route. Co the bao cao Accuracy, Precision, Recall, F1-score va ma tran nham lan.",
+  "samples": [
+    {
+      "id": "router_001",
+      "question": "Trường tuyển sinh năm 2026 theo những phương thức nào?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "tuyen_sinh"
+    },
+    {
+      "id": "router_002",
+      "question": "Chỉ tiêu tuyển sinh năm 2025 của trường là bao nhiêu?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "tuyen_sinh"
+    },
+    {
+      "id": "router_003",
+      "question": "Ngành Công nghệ thông tin năm 2025 lấy bao nhiêu điểm?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "diem_chuan"
+    },
+    {
+      "id": "router_004",
+      "question": "Học phí nhóm ngành công nghệ kỹ thuật năm 2025-2026 là bao nhiêu?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "hoc_phi"
+    },
+    {
+      "id": "router_005",
+      "question": "Hồ sơ xét học bạ cần chuẩn bị những giấy tờ gì?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "ho_so"
+    },
+    {
+      "id": "router_006",
+      "question": "Thời gian đăng ký xét tuyển đợt 1 năm 2025 là khi nào?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "thoi_gian"
+    },
+    {
+      "id": "router_007",
+      "question": "Trường có mấy cơ sở đào tạo?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "co_so_dao_tao"
+    },
+    {
+      "id": "router_008",
+      "question": "Mã trường của Đại học Sư phạm Kỹ thuật Hưng Yên là gì?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "de",
+      "group": "gioi_thieu_truong"
+    },
+    {
+      "id": "router_009",
+      "question": "Trường có học bổng cho sinh viên không?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "trung_binh",
+      "group": "hoc_bong"
+    },
+    {
+      "id": "router_010",
+      "question": "Sinh viên trường có được hỗ trợ giới thiệu việc làm sau tốt nghiệp không?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "trung_binh",
+      "group": "viec_lam"
+    },
+    {
+      "id": "router_011",
+      "question": "Ngành Sư phạm công nghệ có được miễn học phí không?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "trung_binh",
+      "group": "hoc_phi_hoc_bong"
+    },
+    {
+      "id": "router_012",
+      "question": "Thí sinh tốt nghiệp từ năm trước có được xét học bạ vào trường không?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "trung_binh",
+      "group": "hoc_ba"
+    },
+    {
+      "id": "router_013",
+      "question": "Nếu em muốn xét cùng lúc bằng học bạ, điểm thi THPT và HSA thì đăng ký thế nào?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "kho",
+      "group": "nhieu_phuong_thuc"
+    },
+    {
+      "id": "router_014",
+      "question": "Trường có dùng kết quả bài thi đánh giá năng lực SPT của Đại học Sư phạm Hà Nội không?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "kho",
+      "group": "dgnl"
+    },
+    {
+      "id": "router_015",
+      "question": "Theo học cơ điện tử ở trường này có khó không và cơ hội việc làm ra sao?",
+      "expected_route": "main_query",
+      "nhan_route": "main_query",
+      "muc_do": "kho",
+      "group": "nganh_hoc"
+    },
+    {
+      "id": "router_016",
+      "question": "Xin chào",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "de",
+      "group": "chao_hoi"
+    },
+    {
+      "id": "router_017",
+      "question": "Bạn là ai vậy?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "de",
+      "group": "giao_tiep"
+    },
+    {
+      "id": "router_018",
+      "question": "Cảm ơn bạn nhiều nhé",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "de",
+      "group": "cam_on"
+    },
+    {
+      "id": "router_019",
+      "question": "Bạn có khỏe không?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "de",
+      "group": "giao_tiep"
+    },
+    {
+      "id": "router_020",
+      "question": "Kể cho tôi một câu chuyện cười đi",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "de",
+      "group": "giai_tri"
+    },
+    {
+      "id": "router_021",
+      "question": "Hôm nay là thứ mấy?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "de",
+      "group": "ngoai_pham_vi"
+    },
+    {
+      "id": "router_022",
+      "question": "Bạn biết Sơn Tùng không?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "de",
+      "group": "ngoai_pham_vi"
+    },
+    {
+      "id": "router_023",
+      "question": "Tôi đang buồn quá",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "trung_binh",
+      "group": "tam_su"
+    },
+    {
+      "id": "router_024",
+      "question": "Tư vấn chuyện tình cảm giúp tôi với",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "trung_binh",
+      "group": "ngoai_pham_vi"
+    },
+    {
+      "id": "router_025",
+      "question": "Thời tiết hôm nay thế nào?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "trung_binh",
+      "group": "ngoai_pham_vi"
+    },
+    {
+      "id": "router_026",
+      "question": "Python hay Java dễ học hơn?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "trung_binh",
+      "group": "ngoai_pham_vi"
+    },
+    {
+      "id": "router_027",
+      "question": "Trường mình nhiều bạn gái xinh không?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "trung_binh",
+      "group": "cau_bien"
+    },
+    {
+      "id": "router_028",
+      "question": "Ai đẹp trai nhất?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "trung_binh",
+      "group": "giai_tri"
+    },
+    {
+      "id": "router_029",
+      "question": "Làm sao để có người yêu?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "kho",
+      "group": "ngoai_pham_vi"
+    },
+    {
+      "id": "router_030",
+      "question": "Có game nào hay không?",
+      "expected_route": "chitchat",
+      "nhan_route": "chitchat",
+      "muc_do": "kho",
+      "group": "giai_tri"
+    }
+  ]
+}
