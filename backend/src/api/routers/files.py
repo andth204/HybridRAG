@@ -641,7 +641,12 @@ async def stream_file_status_events(
                 if await request.is_disconnected():
                     break
 
-                message = await asyncio.to_thread(consumer.poll, 1.0)
+                # Short poll (0.3s) keeps the worker thread reusable; the
+                # iterator still hits the disconnect probe every loop, so
+                # closed tabs free their thread within ~300ms instead of 1s.
+                message = await asyncio.to_thread(consumer.poll, 0.3)
+                if await request.is_disconnected():
+                    break
                 if message is None:
                     if time.monotonic() - last_ping_at >= 15:
                         last_ping_at = time.monotonic()

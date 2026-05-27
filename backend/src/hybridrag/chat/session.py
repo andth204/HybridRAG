@@ -2,8 +2,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-import psycopg2
 from psycopg2.extras import RealDictCursor
+
+from src.hybridrag.utils.db_pool import borrow
 
 
 @dataclass(frozen=True)
@@ -18,9 +19,6 @@ class ChatSession:
 class ChatSessionRepo:
     def __init__(self, dsn: str):
         self.dsn = dsn
-
-    def _conn(self):
-        return psycopg2.connect(self.dsn)
 
     @staticmethod
     def _row_to_session(row: dict) -> ChatSession:
@@ -38,10 +36,12 @@ class ChatSessionRepo:
         VALUES (%s, %s)
         RETURNING id, user_id, title, created_at, updated_at
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (user_id, title))
-                return self._row_to_session(cur.fetchone())
+                session = self._row_to_session(cur.fetchone())
+            conn.commit()
+            return session
 
     def get(self, session_id: str, user_id: Optional[str] = None) -> Optional[ChatSession]:
         if user_id:
@@ -59,7 +59,7 @@ class ChatSessionRepo:
             """
             params = (session_id,)
 
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, params)
                 row = cur.fetchone()
@@ -92,7 +92,7 @@ class ChatSessionRepo:
             """
             params = (user_id, limit, offset)
 
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, params)
                 rows = cur.fetchall()
@@ -129,10 +129,12 @@ class ChatSessionRepo:
             """
             params = (title, session_id)
 
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, params)
-                return cur.rowcount > 0
+                changed = cur.rowcount > 0
+            conn.commit()
+            return changed
 
     def touch(self, session_id: str) -> bool:
         sql = """
@@ -140,10 +142,12 @@ class ChatSessionRepo:
         SET updated_at = NOW()
         WHERE id = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (session_id,))
-                return cur.rowcount > 0
+                changed = cur.rowcount > 0
+            conn.commit()
+            return changed
 
     def delete(self, session_id: str, user_id: Optional[str] = None) -> bool:
         if user_id:
@@ -153,7 +157,9 @@ class ChatSessionRepo:
             sql = "DELETE FROM chat_sessions WHERE id = %s"
             params = (session_id,)
 
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, params)
-                return cur.rowcount > 0
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted

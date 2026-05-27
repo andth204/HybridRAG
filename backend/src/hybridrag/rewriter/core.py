@@ -8,10 +8,22 @@ import unicodedata
 from typing import Dict, List, Optional
 from openai import AsyncOpenAI
 from cachetools import TTLCache
-from src.config.prompts import get_prompt
+from src.config.prompts import SAFETY_RULES, get_prompt
 from src.config.settings import settings
 from src.hybridrag.utils.metrics import count_tokens, truncate_text
+from src.hybridrag.utils.prompt_security import sanitize_user_text
 log = logging.getLogger(__name__)
+
+
+# System message for the rewriter call. Embeds the safety preamble in
+# the most trusted role so injection inside the user-content body still
+# cannot override the rewrite contract.
+_REWRITER_SYSTEM_MESSAGE = (
+    "Bạn là bộ viết lại câu hỏi cho hệ thống tư vấn tuyển sinh tiếng Việt. "
+    "Nhiệm vụ duy nhất: viết lại câu hỏi hiện tại thành MỘT câu tiếng Việt "
+    "đầy đủ ngữ cảnh, không trả lời câu hỏi, không thêm giải thích.\n\n"
+    f"{SAFETY_RULES}"
+)
 
 
 class QueryReflection:
@@ -65,9 +77,12 @@ class QueryReflection:
         self._inflight: Dict[str, asyncio.Future[str]] = {}
         self._inflight_lock = asyncio.Lock()
 
-    def _make_cache_key(self, current_query: str, recent_queries: List[str]) -> str:
+    def _make_cache_key(self, current_query: str, recent_turns: List[Dict[str, str]]) -> str:
         current = current_query.strip()
-        history = "\x00".join(q.strip() for q in recent_queries)
+        history = "\x00".join(
+            f"{t.get('role','')}:{(t.get('content') or '').strip()}"
+            for t in recent_turns
+        )
         raw = f"{current}\x00\x00{history}"
         return hashlib.md5(raw.encode()).hexdigest()
 
@@ -120,51 +135,116 @@ class QueryReflection:
         except Exception:
             return text[: self._max_history_chars]
 
-    def _format_query_history(self, queries: List[str]) -> str:
-        if not queries:
-            return "No previous questions."
+    def _format_query_history(self, turns: List[Dict[str, str]]) -> str:
+        """Render the last N conversation turns as numbered Q/A pairs.
 
-        selected_queries = queries
+        Each turn is a dict ``{"role": "user"|"assistant", "content": ...}``
+        in chronological order. The rendered block uses ``USER:`` /
+        ``ASSISTANT:`` prefixes so the rewriter LLM can distinguish who
+        said what — essential for resolving coreferences like
+        ``"ở đó"`` against the MOST RECENT entity the assistant just
+        mentioned.
+
+        A token budget keeps the rendered block bounded; older turns
+        are dropped first (we always keep the tail).
+        """
+        if not turns:
+            return "No previous turns."
+
+        selected = turns
         if self._max_history_tokens > 0:
-            kept_rev: List[str] = []
+            kept_rev: List[Dict[str, str]] = []
             used_tokens = 0
-            for q in reversed(queries):
-                q_tokens = self._safe_count_tokens(q)
-                if kept_rev and used_tokens + q_tokens > self._max_history_tokens:
+            for turn in reversed(turns):
+                content = (turn.get("content") or "").strip()
+                if not content:
+                    continue
+                t_tokens = self._safe_count_tokens(content)
+                if kept_rev and used_tokens + t_tokens > self._max_history_tokens:
                     break
-                if not kept_rev and q_tokens > self._max_history_tokens:
-                    kept_rev.append(self._safe_truncate_tokens(q, self._max_history_tokens))
+                if not kept_rev and t_tokens > self._max_history_tokens:
+                    kept_rev.append({
+                        "role": turn.get("role") or "user",
+                        "content": self._safe_truncate_tokens(content, self._max_history_tokens),
+                    })
                     break
-                kept_rev.append(q)
-                used_tokens += q_tokens
+                kept_rev.append({
+                    "role": turn.get("role") or "user",
+                    "content": content,
+                })
+                used_tokens += t_tokens
 
             if kept_rev:
-                selected_queries = list(reversed(kept_rev))
+                selected = list(reversed(kept_rev))
             else:
-                selected_queries = queries[-1:]
+                selected = turns[-1:]
 
-        return "\n".join(f"{i + 1}. {q}" for i, q in enumerate(selected_queries))
+        lines: List[str] = []
+        for i, turn in enumerate(selected, start=1):
+            role = (turn.get("role") or "user").upper()
+            label = "USER" if role == "USER" else "ASSISTANT"
+            content = (turn.get("content") or "").strip()
+            if not content:
+                continue
+            lines.append(f"{i}. {label}: {content}")
+        return "\n".join(lines)
 
-    def _get_recent_user_queries(
+    def _get_recent_turns(
         self,
         chat_history: List[Dict[str, str]],
         current_query: Optional[str] = None,
-    ) -> List[str]:
-        needed = max(2, self._k_rewrite + 1)
-        recent_rev: List[str] = []
-        for msg in reversed(chat_history):
-            if msg.get("role") == "user" and msg.get("content"):
-                recent_rev.append(msg["content"])
-                if len(recent_rev) >= needed:
-                    break
-        if not recent_rev:
+    ) -> List[Dict[str, str]]:
+        """Return the last ``_k_rewrite`` exchanges as alternating
+        user/assistant turns. We slice on USER count so the budget is
+        defined in "questions answered" not raw message count.
+
+        The most recent user message — if it duplicates the current
+        query — is stripped so the rewriter doesn't see the question it
+        is asked to rewrite as its own history.
+        """
+        # Walk backwards collecting USER turns + their immediately
+        # preceding ASSISTANT turn (if any).
+        if not chat_history:
             return []
 
-        recent_user_queries = list(reversed(recent_rev))
-        if current_query and recent_user_queries:
-            if recent_user_queries[-1].strip() == current_query.strip():
-                recent_user_queries = recent_user_queries[:-1]
-        return recent_user_queries[-self._k_rewrite :]
+        # Index of each user turn in chat_history.
+        user_indices = [i for i, m in enumerate(chat_history) if m.get("role") == "user" and (m.get("content") or "").strip()]
+        if not user_indices:
+            return []
+
+        # Strip the trailing user turn if it duplicates current_query.
+        if current_query and user_indices:
+            last_idx = user_indices[-1]
+            if (chat_history[last_idx].get("content") or "").strip() == current_query.strip():
+                user_indices = user_indices[:-1]
+
+        if not user_indices:
+            return []
+
+        # Keep last k user turns + any assistant turn that lives between
+        # two kept user turns OR after the kept user turn but before the
+        # current question.
+        keep_users = user_indices[-self._k_rewrite :]
+        start_idx = keep_users[0]
+        end_idx = user_indices[-1] if user_indices else (len(chat_history) - 1)
+
+        # Also include any assistant message that comes AFTER the last
+        # kept user turn so the rewriter sees what was actually answered.
+        # We extend the slice to include trailing assistant messages.
+        slice_end = end_idx + 1
+        while slice_end < len(chat_history) and chat_history[slice_end].get("role") == "assistant":
+            slice_end += 1
+
+        out: List[Dict[str, str]] = []
+        for m in chat_history[start_idx:slice_end]:
+            role = m.get("role")
+            content = (m.get("content") or "").strip()
+            if not content:
+                continue
+            if role not in {"user", "assistant"}:
+                continue
+            out.append({"role": role, "content": content})
+        return out
 
     def _normalize_rewrite_output(self, raw_output: str, current_query: str) -> str:
         if not raw_output:
@@ -202,24 +282,51 @@ class QueryReflection:
             return current_query
         return candidate
 
-    async def _call_rewriter(self, current_query: str, recent_queries: List[str], cache_key: str) -> str:
-        query_history_string = self._format_query_history(recent_queries)
+    @staticmethod
+    def _sanitize_history_block(history_block: str) -> str:
+        """Sanitize each numbered line of the rendered history string.
+
+        ``_format_query_history`` already prefixes each turn with a
+        line number, so we sanitize the content portion only and rejoin
+        with newlines. This stops a previous user message from
+        injecting prompt-protocol tokens / closing tags into the
+        rewriter prompt.
+        """
+        if not history_block:
+            return history_block
+        out_lines: List[str] = []
+        for line in history_block.splitlines():
+            # Preserve the leading numeric prefix ("1. ", "2. ", ...) so
+            # the model still sees structured history. Strip and
+            # re-attach so sanitize only sees the user content.
+            match = re.match(r"^(\s*\d+\.\s*)(.*)$", line)
+            if match:
+                prefix, body = match.group(1), match.group(2)
+                out_lines.append(f"{prefix}{sanitize_user_text(body)}")
+            else:
+                out_lines.append(sanitize_user_text(line))
+        return "\n".join(out_lines)
+
+    async def _call_rewriter(self, current_query: str, recent_turns: List[Dict[str, str]], cache_key: str) -> str:
+        query_history_string = self._format_query_history(recent_turns)
         if len(query_history_string) > self._max_history_chars:
             query_history_string = query_history_string[-self._max_history_chars :]
+        safe_history = self._sanitize_history_block(query_history_string)
+        safe_current_query = sanitize_user_text(current_query)
 
         result = current_query
         t0 = time.perf_counter()
         try:
             prompt = get_prompt(
                 "query_reflection",
-                query_history=query_history_string,
-                current_query=current_query,
+                query_history=safe_history,
+                current_query=safe_current_query,
             )
             response = await asyncio.wait_for(
                 self.client.chat.completions.create(
                     model=self._rewriter_model,
                     messages=[
-                        {"role": "system", "content": "You rewrite context-dependent questions."},
+                        {"role": "system", "content": _REWRITER_SYSTEM_MESSAGE},
                         {"role": "user", "content": prompt},
                     ],
                     temperature=self._temperature,
@@ -233,6 +340,18 @@ class QueryReflection:
             )
             if result != current_query:
                 await self._cache_set(cache_key, result)
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                try:
+                    from src.hybridrag.utils.cost_tracker import record as _cost_record
+                    _cost_record(
+                        model=self._rewriter_model,
+                        tokens_in=int(getattr(usage, "prompt_tokens", 0) or 0),
+                        tokens_out=int(getattr(usage, "completion_tokens", 0) or 0),
+                        feature="rewrite",
+                    )
+                except Exception:
+                    pass
         except asyncio.TimeoutError:
             log.warning(
                 "QueryReflection timed out after %.1f ms - returning original query",
@@ -247,8 +366,8 @@ class QueryReflection:
         return result
 
     async def reflect(self, current_query: str, chat_history: List[Dict[str, str]]) -> str:
-        recent_queries = self._get_recent_user_queries(chat_history, current_query=current_query)
-        if not recent_queries:
+        recent_turns = self._get_recent_turns(chat_history, current_query=current_query)
+        if not recent_turns:
             log.debug("QueryReflection skipped: no history")
             return current_query
 
@@ -262,7 +381,7 @@ class QueryReflection:
             log.debug("QueryReflection skipped: small-talk short query")
             return current_query
 
-        cache_key = self._make_cache_key(current_query, recent_queries)
+        cache_key = self._make_cache_key(current_query, recent_turns)
         cached = await self._cache_get(cache_key)
         if cached is not None:
             log.debug("QueryReflection cache hit for key=%s", cache_key)
@@ -284,7 +403,7 @@ class QueryReflection:
 
         result = current_query
         try:
-            result = await self._call_rewriter(current_query, recent_queries, cache_key)
+            result = await self._call_rewriter(current_query, recent_turns, cache_key)
         finally:
             if not in_flight.done():
                 in_flight.set_result(result)

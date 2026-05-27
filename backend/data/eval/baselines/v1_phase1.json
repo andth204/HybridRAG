@@ -1,0 +1,3112 @@
+{
+  "meta": {
+    "input": "D:\\my-projects\\nlp\\HybridRAG\\backend\\data\\eval\\golden_v0.jsonl",
+    "used_mock": false,
+    "top_k": 5,
+    "limit": 0,
+    "use_reranker": false,
+    "generation_enabled": false,
+    "generate_model": null,
+    "rerank_top_k": 4,
+    "vector_search_k": 8,
+    "elastic_search_k": 8
+  },
+  "aggregates": {
+    "total": 50,
+    "success": 50,
+    "errors": 0,
+    "recall_at_5": 0.88,
+    "mrr": 0.7273333333333334,
+    "keyword_coverage": null,
+    "retrieval_ms_p50": 176.75070000404958,
+    "retrieval_ms_p95": 326.5184999909252,
+    "generation_ms_p50": null,
+    "generation_ms_p95": null,
+    "gen_runs": 0,
+    "by_intent": {
+      "score_lookup": {
+        "count": 8,
+        "recall_at_k": 0.75,
+        "mrr": 0.5625,
+        "keyword_coverage": null
+      },
+      "tuition_lookup": {
+        "count": 6,
+        "recall_at_k": 1.0,
+        "mrr": 0.9166666666666666,
+        "keyword_coverage": null
+      },
+      "program_info": {
+        "count": 8,
+        "recall_at_k": 0.75,
+        "mrr": 0.6666666666666666,
+        "keyword_coverage": null
+      },
+      "admission_method": {
+        "count": 6,
+        "recall_at_k": 0.8333333333333334,
+        "mrr": 0.4777777777777778,
+        "keyword_coverage": null
+      },
+      "deadline": {
+        "count": 4,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "keyword_coverage": null
+      },
+      "compare": {
+        "count": 4,
+        "recall_at_k": 0.75,
+        "mrr": 0.5625,
+        "keyword_coverage": null
+      },
+      "general_qa": {
+        "count": 10,
+        "recall_at_k": 1.0,
+        "mrr": 0.7916666666666667,
+        "keyword_coverage": null
+      },
+      "chitchat": {
+        "count": 4,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "keyword_coverage": null
+      }
+    },
+    "by_category": {
+      "score": {
+        "count": 8,
+        "recall_at_k": 0.75,
+        "mrr": 0.5625,
+        "keyword_coverage": null
+      },
+      "tuition": {
+        "count": 6,
+        "recall_at_k": 1.0,
+        "mrr": 0.9166666666666666,
+        "keyword_coverage": null
+      },
+      "major": {
+        "count": 8,
+        "recall_at_k": 0.75,
+        "mrr": 0.6666666666666666,
+        "keyword_coverage": null
+      },
+      "method": {
+        "count": 6,
+        "recall_at_k": 0.8333333333333334,
+        "mrr": 0.4777777777777778,
+        "keyword_coverage": null
+      },
+      "deadline": {
+        "count": 4,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "keyword_coverage": null
+      },
+      "compare": {
+        "count": 4,
+        "recall_at_k": 0.75,
+        "mrr": 0.5625,
+        "keyword_coverage": null
+      },
+      "campus": {
+        "count": 4,
+        "recall_at_k": 1.0,
+        "mrr": 0.6458333333333334,
+        "keyword_coverage": null
+      },
+      "contact": {
+        "count": 7,
+        "recall_at_k": 1.0,
+        "mrr": 0.9047619047619048,
+        "keyword_coverage": null
+      },
+      "refusal": {
+        "count": 3,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "keyword_coverage": null
+      }
+    },
+    "failures": [
+      {
+        "id": "q003",
+        "query": "Năm 2023 ngành Sư phạm công nghệ lấy bao nhiêu điểm theo điểm thi THPT?",
+        "intent": "score_lookup",
+        "category": "score",
+        "expected_source": "Điểm 2023.md",
+        "top3_keys": [
+          "tuyen_sinh_247.md",
+          "qa_fb.md",
+          "Điểm 2025.md"
+        ],
+        "error": null
+      },
+      {
+        "id": "q007",
+        "query": "Ngành Ngôn ngữ Trung Quốc lần đầu tuyển sinh năm nào và điểm chuẩn THPT là bao nhiêu?",
+        "intent": "score_lookup",
+        "category": "score",
+        "expected_source": "Điểm 2024.md",
+        "top3_keys": [
+          "tuyen_sinh_247.md",
+          "qa_fb.md",
+          "tuyen_sinh_247.md"
+        ],
+        "error": null
+      },
+      {
+        "id": "q015",
+        "query": "Ngành Kỹ thuật điều khiển và Tự động hóa học mấy năm?",
+        "intent": "program_info",
+        "category": "major",
+        "expected_source": "qa_fb.md",
+        "top3_keys": [
+          "tuyen_sinh_247.md",
+          "tuyen_sinh_247.md",
+          "tuyen_sinh_247.md"
+        ],
+        "error": null
+      },
+      {
+        "id": "q022",
+        "query": "Lớp sinh viên tài năng có những ngành nào và quyền lợi gì?",
+        "intent": "program_info",
+        "category": "major",
+        "expected_source": "Thông báo tuyển sinh đại học chính quy năm 2026.txt",
+        "top3_keys": [
+          "qa_fb.md",
+          "qa_fb.md",
+          "qa_fb.md"
+        ],
+        "error": null
+      },
+      {
+        "id": "q026",
+        "query": "Ngành Sư phạm tiếng Anh xét học bạ có điều kiện gì đặc biệt không?",
+        "intent": "admission_method",
+        "category": "method",
+        "expected_source": "tuyen_sinh_247.md",
+        "top3_keys": [
+          "qa_fb.md",
+          "qa_fb.md",
+          "qa_fb.md"
+        ],
+        "error": null
+      },
+      {
+        "id": "q036",
+        "query": "Học phí khối kỹ thuật so với khối kinh doanh ở UTEHY chênh nhau bao nhiêu?",
+        "intent": "compare",
+        "category": "compare",
+        "expected_source": "tuyen_sinh_247.md",
+        "top3_keys": [
+          "qa_fb.md",
+          "qa_fb.md",
+          "qa_fb.md"
+        ],
+        "error": null
+      }
+    ]
+  },
+  "records": [
+    {
+      "id": "q001",
+      "query": "Điểm chuẩn ngành Công nghệ thông tin năm 2024 theo điểm thi THPT là bao nhiêu?",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2024.md",
+      "expected_keywords": [
+        "17",
+        "Công nghệ thông tin",
+        "2024",
+        "THPT"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.029412,
+          "rerank_score": null,
+          "vector_score": 0.5505933165550232,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.6120667457580566,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 10.975146965357728
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.6070672273635864,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 9.365953231333465
+        }
+      ],
+      "rank": 2,
+      "recall_at_k": 1,
+      "mrr": 0.5,
+      "retrieval_ms": 1442.1150000125635,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q002",
+      "query": "diem chuan cntt 2024 hoc ba bao nhieu",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2024.md",
+      "expected_keywords": [
+        "25",
+        "Công nghệ thông tin",
+        "học bạ",
+        "2024"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031545,
+          "rerank_score": null,
+          "vector_score": 0.4109663963317871,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.03031,
+          "rerank_score": null,
+          "vector_score": 0.41706132888793945,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.4376608729362488,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.437186062335968,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.123870308413507
+        }
+      ],
+      "rank": 2,
+      "recall_at_k": 1,
+      "mrr": 0.5,
+      "retrieval_ms": 183.46739999833517,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q003",
+      "query": "Năm 2023 ngành Sư phạm công nghệ lấy bao nhiêu điểm theo điểm thi THPT?",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2023.md",
+      "expected_keywords": [
+        "26",
+        "Sư phạm công nghệ",
+        "2023",
+        "A00"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.6379776000976562,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 7.039847076972173
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.6186195611953735,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.721658889025423
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.6177771091461182,
+          "bm25_score": null
+        }
+      ],
+      "rank": 0,
+      "recall_at_k": 0,
+      "mrr": 0.0,
+      "retrieval_ms": 324.9329999962356,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q004",
+      "query": "Điểm chuẩn HSA ngành Khoa học máy tính 2025 là bao nhiêu?",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2025.md",
+      "expected_keywords": [
+        "11.5",
+        "Khoa học máy tính",
+        "HSA",
+        "2025"
+      ],
+      "retrieved": [
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.031319,
+          "rerank_score": null,
+          "vector_score": 0.590362548828125,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.030303,
+          "rerank_score": null,
+          "vector_score": 0.5177971124649048,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.029412,
+          "rerank_score": null,
+          "vector_score": 0.5101244449615479,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 9.899470849403237
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5556588172912598,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 326.5184999909252,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q005",
+      "query": "Ngành Kỹ thuật phần mềm năm 2025 điểm chuẩn xét điểm thi THPT bao nhiêu ạ?",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2025.md",
+      "expected_keywords": [
+        "16",
+        "Kỹ thuật Phần mềm",
+        "2025",
+        "A00"
+      ],
+      "retrieved": [
+        {
+          "key": "Điểm 2023.md",
+          "rrf_score": 0.029631,
+          "rerank_score": null,
+          "vector_score": 0.5996332168579102,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.6560071706771851,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 10.256319454493411
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.6483595371246338,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 9.66794349775654
+        }
+      ],
+      "rank": 2,
+      "recall_at_k": 1,
+      "mrr": 0.5,
+      "retrieval_ms": 170.19129999971483,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q006",
+      "query": "Diem chuan nganh cong nghe ky thuat o to nam 2023 theo hoc ba?",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2023.md",
+      "expected_keywords": [
+        "24",
+        "Công nghệ kỹ thuật ô tô",
+        "học bạ",
+        "2023"
+      ],
+      "retrieved": [
+        {
+          "key": "Điểm 2023.md",
+          "rrf_score": 0.031514,
+          "rerank_score": null,
+          "vector_score": 0.4275406002998352,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.4704096019268036,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.438527757564743
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.45836567878723145,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.4451528787612915,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 171.73689999617636,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q007",
+      "query": "Ngành Ngôn ngữ Trung Quốc lần đầu tuyển sinh năm nào và điểm chuẩn THPT là bao nhiêu?",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2024.md",
+      "expected_keywords": [
+        "2024",
+        "Ngôn ngữ Trung Quốc",
+        "22",
+        "D01"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.5535675287246704,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 13.760563618993256
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5514522194862366,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 10.861584552416927
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.543510377407074,
+          "bm25_score": null
+        }
+      ],
+      "rank": 0,
+      "recall_at_k": 0,
+      "mrr": 0.0,
+      "retrieval_ms": 174.74599998968188,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q008",
+      "query": "Điểm chuẩn ngành Công nghệ kỹ thuật cơ điện tử năm 2024 xét điểm thi THPT là bao nhiêu?",
+      "intent": "score_lookup",
+      "category": "score",
+      "expected_source": "Điểm 2024.md",
+      "expected_keywords": [
+        "16",
+        "Công nghệ kỹ thuật cơ điện tử",
+        "2024",
+        "A00"
+      ],
+      "retrieved": [
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.6228293180465698,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 10.813545970987365
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.598885178565979,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 9.118733593958488
+        },
+        {
+          "key": "Điểm 2023.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.5935646295547485,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 177.99160000868142,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q009",
+      "query": "Học phí ngành Công nghệ thông tin năm học 2025-2026 là bao nhiêu một tháng?",
+      "intent": "tuition_lookup",
+      "category": "tuition",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "1.790.000",
+        "Công nghệ kỹ thuật",
+        "Máy tính",
+        "tháng"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031545,
+          "rerank_score": null,
+          "vector_score": 0.6114010214805603,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031258,
+          "rerank_score": null,
+          "vector_score": 0.5349849462509155,
+          "bm25_score": null
+        },
+        {
+          "key": "Thông báo tuyển sinh đại học chính quy năm 2026.txt",
+          "rrf_score": 0.031054,
+          "rerank_score": null,
+          "vector_score": 0.5147175192832947,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030331,
+          "rerank_score": null,
+          "vector_score": 0.5381374955177307,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 9.020111645289134
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 176.7839000094682,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q010",
+      "query": "Học phí khối ngành Kinh doanh và quản lý năm 2025-2026 là bao nhiêu ạ?",
+      "intent": "tuition_lookup",
+      "category": "tuition",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "1.550.000",
+        "Kinh doanh",
+        "quản lý",
+        "tháng"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032018,
+          "rerank_score": null,
+          "vector_score": 0.49049869179725647,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031319,
+          "rerank_score": null,
+          "vector_score": 0.5607131123542786,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031258,
+          "rerank_score": null,
+          "vector_score": 0.4923647940158844,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030579,
+          "rerank_score": null,
+          "vector_score": 0.47860246896743774,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030303,
+          "rerank_score": null,
+          "vector_score": 0.48494160175323486,
+          "bm25_score": null
+        }
+      ],
+      "rank": 2,
+      "recall_at_k": 1,
+      "mrr": 0.5,
+      "retrieval_ms": 192.62549999984913,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q011",
+      "query": "Hoc phi cua chuong trinh giang day bang tieng Anh la bao nhieu?",
+      "intent": "tuition_lookup",
+      "category": "tuition",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "2.400.000",
+        "tiếng Anh",
+        "tháng",
+        "sinh viên"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.030331,
+          "rerank_score": null,
+          "vector_score": 0.3908001780509949,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030303,
+          "rerank_score": null,
+          "vector_score": 0.3927329182624817,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.42941462993621826,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 12.500198900283735
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.4106389880180359,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 171.99669999536127,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q012",
+      "query": "Học phí ngành Công nghệ kỹ thuật ô tô khoảng bao nhiêu một tháng và tổng chi phí 4 năm?",
+      "intent": "tuition_lookup",
+      "category": "tuition",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "1.287.000",
+        "Công nghệ kỹ thuật ô tô",
+        "60",
+        "triệu"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032266,
+          "rerank_score": null,
+          "vector_score": 0.5211279392242432,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032258,
+          "rerank_score": null,
+          "vector_score": 0.5246846675872803,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031319,
+          "rerank_score": null,
+          "vector_score": 0.540984034538269,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.03009,
+          "rerank_score": null,
+          "vector_score": 0.48932838439941406,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 11.76654896444195
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 188.62000000081025,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q013",
+      "query": "Ngành Sư phạm công nghệ có được miễn học phí không và hỗ trợ bao nhiêu một tháng?",
+      "intent": "tuition_lookup",
+      "category": "tuition",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "miễn 100%",
+        "Sư phạm công nghệ",
+        "3,63 triệu",
+        "4 năm"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.5390712022781372,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032258,
+          "rerank_score": null,
+          "vector_score": 0.5250663757324219,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031025,
+          "rerank_score": null,
+          "vector_score": 0.4810633063316345,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03101,
+          "rerank_score": null,
+          "vector_score": 0.4714261591434479,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030536,
+          "rerank_score": null,
+          "vector_score": 0.4516613781452179,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 326.30910001171287,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q014",
+      "query": "Học phí UTEHY có dự kiến tăng trong 2-3 năm tới không?",
+      "intent": "tuition_lookup",
+      "category": "tuition",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "1.300.000",
+        "1.500.000",
+        "tăng nhẹ",
+        "Bộ GD&ĐT"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.57813560962677,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031545,
+          "rerank_score": null,
+          "vector_score": 0.5962783098220825,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.029851,
+          "rerank_score": null,
+          "vector_score": 0.5253177881240845,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 8.400751281153429
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.5722860097885132,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 182.04830000468064,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q015",
+      "query": "Ngành Kỹ thuật điều khiển và Tự động hóa học mấy năm?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "4 năm",
+        "Kỹ thuật điều khiển",
+        "Tự động hóa",
+        "đại học chính quy"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031025,
+          "rerank_score": null,
+          "vector_score": 0.37440377473831177,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.029857,
+          "rerank_score": null,
+          "vector_score": 0.368317186832428,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.42805051803588867,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 4.714437424279176
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.4020727276802063,
+          "bm25_score": null
+        }
+      ],
+      "rank": 0,
+      "recall_at_k": 0,
+      "mrr": 0.0,
+      "retrieval_ms": 197.13320001028478,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q016",
+      "query": "Ngành Công nghệ giáo dục ra trường làm nghề gì?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "Công nghệ giáo dục",
+        "e-learning",
+        "EdTech",
+        "thiết kế"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.5264616012573242,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032002,
+          "rerank_score": null,
+          "vector_score": 0.49297720193862915,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031025,
+          "rerank_score": null,
+          "vector_score": 0.4514853358268738,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029857,
+          "rerank_score": null,
+          "vector_score": 0.42659690976142883,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.4940343499183655,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 164.80440000304952,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q017",
+      "query": "Ngành Công nghệ may học xong ra trường có phải làm công nhân may không?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "không",
+        "Công nghệ may",
+        "thiết kế",
+        "quản lý sản xuất"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032266,
+          "rerank_score": null,
+          "vector_score": 0.493302583694458,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031281,
+          "rerank_score": null,
+          "vector_score": 0.4998513460159302,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031054,
+          "rerank_score": null,
+          "vector_score": 0.4601590633392334,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030769,
+          "rerank_score": null,
+          "vector_score": 0.4743555784225464,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.50042724609375,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 175.43779998959508,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q018",
+      "query": "Ngành Điện lạnh và điều hòa không khí học những kiến thức gì?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "nhiệt động lực",
+        "kỹ thuật lạnh",
+        "hệ thống lạnh",
+        "thực hành"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.40551653504371643,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030798,
+          "rerank_score": null,
+          "vector_score": 0.37170279026031494,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.030579,
+          "rerank_score": null,
+          "vector_score": 0.39945223927497864,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2023.md",
+          "rrf_score": 0.030303,
+          "rerank_score": null,
+          "vector_score": 0.3864918053150177,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.4165797829627991,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 181.5543999982765,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q019",
+      "query": "CNTT của UTEHY có phải thế mạnh của trường không, ra trường có dễ xin việc không?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "Công nghệ thông tin",
+        "92,7%",
+        "việc làm",
+        "8-15 triệu"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031778,
+          "rerank_score": null,
+          "vector_score": 0.5935492515563965,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031778,
+          "rerank_score": null,
+          "vector_score": 0.5444153547286987,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031025,
+          "rerank_score": null,
+          "vector_score": 0.5577430129051208,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030835,
+          "rerank_score": null,
+          "vector_score": 0.5608285665512085,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030579,
+          "rerank_score": null,
+          "vector_score": 0.518825352191925,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 944.3673000059789,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q020",
+      "query": "Năm 2025 trường tuyển sinh tổng cộng bao nhiêu ngành và bao nhiêu chỉ tiêu?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "3.600",
+        "25 ngành",
+        "5 phương thức",
+        "2025"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.6477923393249512,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 12.465770183705416
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.6392244100570679,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 9.45226961559705
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.622829794883728,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 174.3038999993587,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q021",
+      "query": "Ngành Kế toán mã ngành bao nhiêu và đào tạo các chuyên ngành nào?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "7340301",
+        "Kế toán doanh nghiệp",
+        "Kiểm toán",
+        "Kế toán"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031746,
+          "rerank_score": null,
+          "vector_score": 0.5013765096664429,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029857,
+          "rerank_score": null,
+          "vector_score": 0.4674191474914551,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.5200591683387756,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 8.355309579974989
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5072070360183716,
+          "bm25_score": null
+        }
+      ],
+      "rank": 3,
+      "recall_at_k": 1,
+      "mrr": 0.3333333333333333,
+      "retrieval_ms": 297.93610000342596,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q022",
+      "query": "Lớp sinh viên tài năng có những ngành nào và quyền lợi gì?",
+      "intent": "program_info",
+      "category": "major",
+      "expected_source": "Thông báo tuyển sinh đại học chính quy năm 2026.txt",
+      "expected_keywords": [
+        "Cơ điện tử",
+        "Khoa học máy tính",
+        "học bổng",
+        "Ký túc xá"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032258,
+          "rerank_score": null,
+          "vector_score": 0.5260433554649353,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032018,
+          "rerank_score": null,
+          "vector_score": 0.5307738780975342,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029857,
+          "rerank_score": null,
+          "vector_score": 0.4856110215187073,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 9.229170821042302
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.5174621939659119,
+          "bm25_score": null
+        }
+      ],
+      "rank": 0,
+      "recall_at_k": 0,
+      "mrr": 0.0,
+      "retrieval_ms": 173.92349999863654,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q023",
+      "query": "Năm 2025 trường xét tuyển theo những phương thức nào?",
+      "intent": "admission_method",
+      "category": "method",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "THPT",
+        "V-SAT",
+        "học bạ",
+        "HSA",
+        "TSA"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.030798,
+          "rerank_score": null,
+          "vector_score": 0.6390372514724731,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.6447738409042358,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 4.91064058618641
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.6434751749038696,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 4.634683652878956
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 176.49019999953452,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q024",
+      "query": "Điều kiện xét học bạ vào trường năm 2024 là gì?",
+      "intent": "admission_method",
+      "category": "method",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "19,0",
+        "3 môn",
+        "tổ hợp",
+        "điểm ưu tiên"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031778,
+          "rerank_score": null,
+          "vector_score": 0.5705258846282959,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.9549543187285225
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5534020662307739,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.43581361353465
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.5501418113708496,
+          "bm25_score": null
+        }
+      ],
+      "rank": 3,
+      "recall_at_k": 1,
+      "mrr": 0.3333333333333333,
+      "retrieval_ms": 182.55149999458808,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q025",
+      "query": "Trường có nhận xét tuyển bằng điểm HSA của ĐHQG Hà Nội không, ngưỡng đầu vào bao nhiêu?",
+      "intent": "admission_method",
+      "category": "method",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "HSA",
+        "60 điểm",
+        "ĐHQG Hà Nội",
+        "đánh giá năng lực"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031778,
+          "rerank_score": null,
+          "vector_score": 0.5164855718612671,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031746,
+          "rerank_score": null,
+          "vector_score": 0.5257226824760437,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030777,
+          "rerank_score": null,
+          "vector_score": 0.5145573019981384,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.5319582223892212,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5297092199325562,
+          "bm25_score": null
+        }
+      ],
+      "rank": 5,
+      "recall_at_k": 1,
+      "mrr": 0.2,
+      "retrieval_ms": 171.67520000657532,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q026",
+      "query": "Ngành Sư phạm tiếng Anh xét học bạ có điều kiện gì đặc biệt không?",
+      "intent": "admission_method",
+      "category": "method",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "Sư phạm tiếng Anh",
+        "giỏi",
+        "lớp 12",
+        "8,0"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.4804588556289673,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03101,
+          "rerank_score": null,
+          "vector_score": 0.3933747410774231,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030579,
+          "rerank_score": null,
+          "vector_score": 0.3975060284137726,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.4274505078792572,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.140382755138302
+        }
+      ],
+      "rank": 0,
+      "recall_at_k": 0,
+      "mrr": 0.0,
+      "retrieval_ms": 176.49270000401884,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q027",
+      "query": "Em có IELTS 5.5 trở lên thì có được xét tuyển kết hợp vào trường không?",
+      "intent": "admission_method",
+      "category": "method",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "IELTS",
+        "5.5",
+        "xét tuyển kết hợp",
+        "chứng chỉ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032002,
+          "rerank_score": null,
+          "vector_score": 0.5384698510169983,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031545,
+          "rerank_score": null,
+          "vector_score": 0.5390753746032715,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031498,
+          "rerank_score": null,
+          "vector_score": 0.5370786786079407,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 12.483389530801961
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5387780070304871,
+          "bm25_score": null
+        }
+      ],
+      "rank": 3,
+      "recall_at_k": 1,
+      "mrr": 0.3333333333333333,
+      "retrieval_ms": 168.5645000106888,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q028",
+      "query": "Em muon dang ky vao truong bang nhieu phuong thuc thi co phai dang ky nhieu lan khong?",
+      "intent": "admission_method",
+      "category": "method",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "1 lần",
+        "cổng thông tin",
+        "nhiều phương thức",
+        "điểm cao nhất"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.4675033688545227,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032266,
+          "rerank_score": null,
+          "vector_score": 0.46187424659729004,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031514,
+          "rerank_score": null,
+          "vector_score": 0.4639778733253479,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031258,
+          "rerank_score": null,
+          "vector_score": 0.44096678495407104,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030777,
+          "rerank_score": null,
+          "vector_score": 0.44076472520828247,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 170.57849999400787,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q029",
+      "query": "Thời gian đăng ký xét tuyển đợt 1 năm 2025 trên cổng Bộ GD&ĐT là khi nào?",
+      "intent": "deadline",
+      "category": "deadline",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "16/7/2025",
+        "28/7/2025",
+        "cổng",
+        "Bộ GDĐT"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.5984683632850647,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031281,
+          "rerank_score": null,
+          "vector_score": 0.5825412273406982,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.594124436378479,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.5896986722946167,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 10.881445124844154
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 176.96920000889804,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q030",
+      "query": "Thời gian nộp hồ sơ xét học bạ năm 2024 từ ngày nào đến ngày nào?",
+      "intent": "deadline",
+      "category": "deadline",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "01/3/2024",
+        "30/6/2024",
+        "hồ sơ",
+        "học bạ"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.5667277574539185,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.032002,
+          "rerank_score": null,
+          "vector_score": 0.5347733497619629,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.030835,
+          "rerank_score": null,
+          "vector_score": 0.4950823187828064,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.030777,
+          "rerank_score": null,
+          "vector_score": 0.5039315223693848,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.030769,
+          "rerank_score": null,
+          "vector_score": 0.5092446804046631,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 174.61510001157876,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q031",
+      "query": "Khi nào trường công bố kết quả trúng tuyển sớm năm 2024?",
+      "intent": "deadline",
+      "category": "deadline",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "08/7/2024",
+        "trúng tuyển sớm",
+        "17h00",
+        "kết quả"
+      ],
+      "retrieved": [
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.032018,
+          "rerank_score": null,
+          "vector_score": 0.5700711011886597,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.032002,
+          "rerank_score": null,
+          "vector_score": 0.5858792066574097,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031778,
+          "rerank_score": null,
+          "vector_score": 0.6280065774917603,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031754,
+          "rerank_score": null,
+          "vector_score": 0.6123741269111633,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 7.913898561940366
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 175.6085999950301,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q032",
+      "query": "Bao gio truong xet tuyen vay a, em muon nop ho so hoc ba?",
+      "intent": "deadline",
+      "category": "deadline",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "tháng 4",
+        "tháng 5",
+        "tháng 7",
+        "học bạ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.434902548789978,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031258,
+          "rerank_score": null,
+          "vector_score": 0.4297221899032593,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031025,
+          "rerank_score": null,
+          "vector_score": 0.41485345363616943,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029851,
+          "rerank_score": null,
+          "vector_score": 0.4065379500389099,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.43937647342681885,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 176.75070000404958,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q033",
+      "query": "Điểm chuẩn ngành Công nghệ thông tin năm 2023 và 2024 có khác nhau không?",
+      "intent": "compare",
+      "category": "compare",
+      "expected_source": "Điểm 2024.md",
+      "expected_keywords": [
+        "17,5",
+        "17",
+        "2023",
+        "2024",
+        "Công nghệ thông tin"
+      ],
+      "retrieved": [
+        {
+          "key": "Điểm 2023.md",
+          "rrf_score": 0.031025,
+          "rerank_score": null,
+          "vector_score": 0.5510295629501343,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.5640658736228943,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.735709858873744
+        },
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5515053272247314,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.629264478843143
+        }
+      ],
+      "rank": 4,
+      "recall_at_k": 1,
+      "mrr": 0.25,
+      "retrieval_ms": 173.59679999935906,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q034",
+      "query": "Học ngành kỹ thuật điện điện tử nên chọn cơ sở 1 hay cơ sở 2?",
+      "intent": "compare",
+      "category": "compare",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "cơ sở 1",
+        "Khoái Châu",
+        "thực hành",
+        "Kỹ thuật điện"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.47842884063720703,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031281,
+          "rerank_score": null,
+          "vector_score": 0.39996403455734253,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029851,
+          "rerank_score": null,
+          "vector_score": 0.3993428349494934,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.4251936674118042,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.42510896921157837,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 171.24710000643972,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q035",
+      "query": "So sánh điểm chuẩn ngành Kế toán năm 2024 giữa xét THPT và học bạ?",
+      "intent": "compare",
+      "category": "compare",
+      "expected_source": "Điểm 2024.md",
+      "expected_keywords": [
+        "Kế toán",
+        "16",
+        "23",
+        "2024",
+        "học bạ"
+      ],
+      "retrieved": [
+        {
+          "key": "Điểm 2024.md",
+          "rrf_score": 0.030835,
+          "rerank_score": null,
+          "vector_score": 0.625334620475769,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030835,
+          "rerank_score": null,
+          "vector_score": 0.546919584274292,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030777,
+          "rerank_score": null,
+          "vector_score": 0.5628235340118408,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.6284875273704529,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 5.9732521285286895
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 168.28329999407288,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q036",
+      "query": "Học phí khối kỹ thuật so với khối kinh doanh ở UTEHY chênh nhau bao nhiêu?",
+      "intent": "compare",
+      "category": "compare",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "1.790.000",
+        "1.550.000",
+        "kỹ thuật",
+        "kinh doanh"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.584670901298523,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031498,
+          "rerank_score": null,
+          "vector_score": 0.5711828470230103,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031319,
+          "rerank_score": null,
+          "vector_score": 0.5944411754608154,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031281,
+          "rerank_score": null,
+          "vector_score": 0.5347650051116943,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030536,
+          "rerank_score": null,
+          "vector_score": 0.5429851412773132,
+          "bm25_score": null
+        }
+      ],
+      "rank": 0,
+      "recall_at_k": 0,
+      "mrr": 0.0,
+      "retrieval_ms": 175.40740000549704,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q037",
+      "query": "Trường ĐHSPKT HY có bao nhiêu cơ sở đào tạo?",
+      "intent": "general_qa",
+      "category": "campus",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "3 cơ sở",
+        "Khoái Châu",
+        "Mỹ Hào",
+        "Hải Dương"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.5100051164627075,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 5.537004653810017
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5091828107833862,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 5.430814457897385
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.4985097050666809,
+          "bm25_score": null
+        }
+      ],
+      "rank": 3,
+      "recall_at_k": 1,
+      "mrr": 0.3333333333333333,
+      "retrieval_ms": 285.1848999998765,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q038",
+      "query": "Cơ sở 1 của trường ở đâu?",
+      "intent": "general_qa",
+      "category": "campus",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "Khoái Châu",
+        "Dân Tiến",
+        "Hưng Yên",
+        "cơ sở 1"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031746,
+          "rerank_score": null,
+          "vector_score": 0.36356666684150696,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.3977277874946594,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 2.896005310637782
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.36394810676574707,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 2.8160515886475155
+        }
+      ],
+      "rank": 4,
+      "recall_at_k": 1,
+      "mrr": 0.25,
+      "retrieval_ms": 167.92439999699127,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q039",
+      "query": "Ở đó dạy ngành gì vậy?",
+      "intent": "general_qa",
+      "category": "campus",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "Khoái Châu",
+        "kỹ thuật",
+        "ô tô",
+        "cơ khí"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.5439975261688232,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031746,
+          "rerank_score": null,
+          "vector_score": 0.5011648535728455,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.5397573709487915,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 4.963447891230958
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.015625,
+          "rerank_score": null,
+          "vector_score": 0.4957146942615509,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 182.0060000027297,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q040",
+      "query": "Cơ sở 3 ở Hải Dương dạy những ngành nào?",
+      "intent": "general_qa",
+      "category": "campus",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "Hải Dương",
+        "Kinh tế",
+        "Công nghệ may",
+        "Ngôn ngữ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.5537797212600708,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030835,
+          "rerank_score": null,
+          "vector_score": 0.5120595693588257,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 8.255814422493676
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.5109317898750305,
+          "bm25_score": null
+        },
+        {
+          "key": "Thông báo tuyển sinh đại học chính quy năm 2026.txt",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 6.972630524231948
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 174.33939999318682,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q041",
+      "query": "Mã trường của UTEHY là gì và tên tiếng Anh là gì?",
+      "intent": "general_qa",
+      "category": "contact",
+      "expected_source": "tuyen_sinh_247.md",
+      "expected_keywords": [
+        "SKH",
+        "Hung Yen University of Technology and Education",
+        "UTEHY",
+        "mã trường"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.5353124141693115,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032266,
+          "rerank_score": null,
+          "vector_score": 0.4830108880996704,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.031754,
+          "rerank_score": null,
+          "vector_score": 0.4872090518474579,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030777,
+          "rerank_score": null,
+          "vector_score": 0.4747118353843689,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03009,
+          "rerank_score": null,
+          "vector_score": 0.4565097987651825,
+          "bm25_score": null
+        }
+      ],
+      "rank": 3,
+      "recall_at_k": 1,
+      "mrr": 0.3333333333333333,
+      "retrieval_ms": 183.67259998922236,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q042",
+      "query": "Trường có quỹ học bổng bao nhiêu mỗi năm và có những loại học bổng nào?",
+      "intent": "general_qa",
+      "category": "contact",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "10 tỷ",
+        "học bổng khuyến khích",
+        "doanh nghiệp",
+        "3.2/4.0"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.5188179612159729,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032002,
+          "rerank_score": null,
+          "vector_score": 0.5135798454284668,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030798,
+          "rerank_score": null,
+          "vector_score": 0.45031464099884033,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030536,
+          "rerank_score": null,
+          "vector_score": 0.4587481617927551,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03009,
+          "rerank_score": null,
+          "vector_score": 0.4709717035293579,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 191.86330000229646,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q043",
+      "query": "Trường thành lập năm nào và có lịch sử bao nhiêu năm?",
+      "intent": "general_qa",
+      "category": "contact",
+      "expected_source": "wiki.md",
+      "expected_keywords": [
+        "1966",
+        "21 tháng 12",
+        "Trung học Công nghiệp",
+        "2003"
+      ],
+      "retrieved": [
+        {
+          "key": "wiki.md",
+          "rrf_score": 0.032787,
+          "rerank_score": null,
+          "vector_score": 0.3627648949623108,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030536,
+          "rerank_score": null,
+          "vector_score": 0.31341633200645447,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029857,
+          "rerank_score": null,
+          "vector_score": 0.3103865087032318,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.3472639322280884,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 8.202735882832162
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 173.2369999954244,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q044",
+      "query": "Trường có ngành Y khoa không ạ?",
+      "intent": "general_qa",
+      "category": "refusal",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "chưa có thông tin",
+        "liên hệ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032266,
+          "rerank_score": null,
+          "vector_score": 0.5163012742996216,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032258,
+          "rerank_score": null,
+          "vector_score": 0.5157127976417542,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03125,
+          "rerank_score": null,
+          "vector_score": 0.5141441822052002,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031099,
+          "rerank_score": null,
+          "vector_score": 0.4821168780326843,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030536,
+          "rerank_score": null,
+          "vector_score": 0.5034410357475281,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 176.4477000106126,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q045",
+      "query": "Ký túc xá của trường giá bao nhiêu một tháng?",
+      "intent": "general_qa",
+      "category": "refusal",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "chưa có thông tin",
+        "liên hệ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031545,
+          "rerank_score": null,
+          "vector_score": 0.3767566680908203,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031258,
+          "rerank_score": null,
+          "vector_score": 0.37767261266708374,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03125,
+          "rerank_score": null,
+          "vector_score": 0.38232317566871643,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.4507608115673065,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": 0.39348071813583374,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 301.0245999903418,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q046",
+      "query": "Học bổng toàn phần cho sinh viên quốc tế cụ thể là bao nhiêu USD?",
+      "intent": "general_qa",
+      "category": "refusal",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "chưa có thông tin",
+        "liên hệ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.4028683006763458,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032002,
+          "rerank_score": null,
+          "vector_score": 0.38121747970581055,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030777,
+          "rerank_score": null,
+          "vector_score": 0.35510754585266113,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03031,
+          "rerank_score": null,
+          "vector_score": 0.3476414084434509,
+          "bm25_score": null
+        },
+        {
+          "key": "tuyen_sinh_247.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.4190167188644409,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 179.36829999962356,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q047",
+      "query": "Chào thầy cô ạ!",
+      "intent": "chitchat",
+      "category": "contact",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "chào",
+        "tư vấn",
+        "UTEHY",
+        "hỗ trợ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032522,
+          "rerank_score": null,
+          "vector_score": 0.37125882506370544,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031025,
+          "rerank_score": null,
+          "vector_score": 0.36608976125717163,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029857,
+          "rerank_score": null,
+          "vector_score": 0.3422134518623352,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.029851,
+          "rerank_score": null,
+          "vector_score": 0.3419954180717468,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.37743520736694336,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 188.28600000415463,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q048",
+      "query": "Cảm ơn thầy/cô đã tư vấn ạ!",
+      "intent": "chitchat",
+      "category": "contact",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "cảm ơn",
+        "hỗ trợ",
+        "chúc",
+        "thành công"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031545,
+          "rerank_score": null,
+          "vector_score": 0.3735707998275757,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031281,
+          "rerank_score": null,
+          "vector_score": 0.39629119634628296,
+          "bm25_score": null
+        },
+        {
+          "key": "Điểm 2025.md",
+          "rrf_score": 0.016393,
+          "rerank_score": null,
+          "vector_score": 0.40321552753448486,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 8.069564227279185
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.015873,
+          "rerank_score": null,
+          "vector_score": 0.3914290964603424,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 167.33599999861326,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q049",
+      "query": "Trường mình nhiều bạn gái không ạ?",
+      "intent": "chitchat",
+      "category": "contact",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "nam sinh",
+        "Công nghệ may",
+        "Ngôn ngữ Anh",
+        "tỷ lệ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032266,
+          "rerank_score": null,
+          "vector_score": 0.4325026273727417,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032266,
+          "rerank_score": null,
+          "vector_score": 0.4153802990913391,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031054,
+          "rerank_score": null,
+          "vector_score": 0.39668044447898865,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03031,
+          "rerank_score": null,
+          "vector_score": 0.4093112647533417,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.03009,
+          "rerank_score": null,
+          "vector_score": 0.39072126150131226,
+          "bm25_score": null
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 195.1409000030253,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    },
+    {
+      "id": "q050",
+      "query": "Hi bot, bạn có giúp được mình tìm thông tin tuyển sinh không?",
+      "intent": "chitchat",
+      "category": "contact",
+      "expected_source": "qa_fb.md",
+      "expected_keywords": [
+        "có thể",
+        "tuyển sinh",
+        "UTEHY",
+        "hỗ trợ"
+      ],
+      "retrieved": [
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.032002,
+          "rerank_score": null,
+          "vector_score": 0.5097308158874512,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031545,
+          "rerank_score": null,
+          "vector_score": 0.5099586248397827,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.031319,
+          "rerank_score": null,
+          "vector_score": 0.4833313226699829,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.030331,
+          "rerank_score": null,
+          "vector_score": 0.4911702871322632,
+          "bm25_score": null
+        },
+        {
+          "key": "qa_fb.md",
+          "rrf_score": 0.016129,
+          "rerank_score": null,
+          "vector_score": null,
+          "bm25_score": 8.49559737060233
+        }
+      ],
+      "rank": 1,
+      "recall_at_k": 1,
+      "mrr": 1.0,
+      "retrieval_ms": 192.52149999374524,
+      "generation_ms": null,
+      "answer": null,
+      "keyword_coverage": null,
+      "error": null
+    }
+  ]
+}

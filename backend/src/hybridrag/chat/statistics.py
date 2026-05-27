@@ -1,8 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timezone
-import psycopg2
 from psycopg2.extras import RealDictCursor
+
+from src.hybridrag.utils.db_pool import borrow
 
 
 @dataclass(frozen=True)
@@ -28,9 +29,6 @@ class OverviewStats:
 class StatisticsRepo:
     def __init__(self, dsn: str):
         self.dsn = dsn
-
-    def _conn(self):
-        return psycopg2.connect(self.dsn)
 
     def get_overview(self) -> OverviewStats:
         sql = """
@@ -78,7 +76,7 @@ class StatisticsRepo:
         CROSS JOIN session_stats ss
         CROSS JOIN message_stats ms
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql)
                 row = cur.fetchone() or {}
@@ -117,7 +115,7 @@ class StatisticsRepo:
         GROUP BY b.bucket_start
         ORDER BY b.bucket_start ASC
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (bounded_hours,))
                 rows = cur.fetchall()

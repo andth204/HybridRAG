@@ -1,0 +1,28 @@
+# Run from backend root:
+#   docker compose -f docker-compose.frontend.yml up -d --build
+#
+# Serves the Vue SPA via nginx and proxies /api/* to utehy-api on the
+# shared utehy-network.
+
+services:
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        # Same-origin call: nginx in this container proxies /api → utehy-api.
+        VITE_API_BASE_URL: /api/v1
+        # Surface Google OAuth client id at build-time. Backend .env uses
+        # GOOGLE_CLIENT_ID; we mirror it into the Vite-prefixed name the
+        # frontend bundle reads via import.meta.env.
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-${GOOGLE_CLIENT_ID:-}}
+    container_name: utehy-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    networks: [ utehy-network ]
+
+networks:
+  utehy-network:
+    name: utehy-network
+    external: true

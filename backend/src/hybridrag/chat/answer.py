@@ -2,8 +2,20 @@ from __future__ import annotations
 import re
 from typing import Any, AsyncIterator, Dict, List, Optional
 from openai import AsyncOpenAI
-from src.config.prompts import get_prompt
+from src.config.prompts import SAFETY_RULES, get_prompt
 from src.config.settings import settings
+from src.hybridrag.utils.prompt_security import sanitize_user_text
+
+
+# System message for the RAG answer call. Embeds the safety preamble so
+# the rule is anchored in the system role (most trusted) rather than
+# only inside the user-role prompt body.
+_RAG_SYSTEM_MESSAGE = (
+    "Bạn là chuyên viên tư vấn tuyển sinh tiếng Việt của Trường Đại học "
+    "Sư phạm Kỹ thuật Hưng Yên (UTEHY). Bạn chỉ trả lời dựa trên dữ liệu "
+    "đã được truy xuất và tuân thủ các quy tắc trích dẫn, từ chối, an toàn.\n\n"
+    f"{SAFETY_RULES}"
+)
 
 
 class AnswerGenerator:
@@ -52,8 +64,16 @@ class AnswerGenerator:
         docs: List[Dict[str, Any]],
         *,
         max_docs: int = 6,
-        max_chars_per_doc: int = 1200,
+        max_chars_per_doc: int = 4000,
     ) -> str:
+        """Render retrieved docs as numbered ``<context_doc>`` blocks.
+
+        Each doc is wrapped in a trust-boundary tag so the LLM can
+        structurally distinguish data from instructions. Doc content is
+        run through ``sanitize_user_text`` because retrieved markdown is
+        treated as UNTRUSTED — an attacker can plant injection tokens in
+        ingested documents.
+        """
         lines: List[str] = []
         used_source_ids: set[str] = set()
         kept = 0
@@ -72,7 +92,18 @@ class AnswerGenerator:
             used_source_ids.add(source_id)
             kept += 1
             content = content[:max_chars_per_doc]
-            lines.append(f"[{kept}] {source_name}\n{content}")
+            # Sanitize after slicing so the budget is on raw chars, not
+            # post-escape entity-expanded chars.
+            safe_content = sanitize_user_text(content)
+            # Source name also goes through sanitize so filenames with
+            # angle brackets or special tokens can't escape the
+            # ``source="..."`` attribute.
+            safe_source = sanitize_user_text(source_name)
+            lines.append(
+                f'<context_doc id="{kept}" source="{safe_source}">\n'
+                f"{safe_content}\n"
+                f"</context_doc>"
+            )
         return "\n\n".join(lines)
 
     async def stream_answer(
@@ -82,40 +113,64 @@ class AnswerGenerator:
         retrieved_docs: List[Dict[str, Any]],
         timeout: float = 20.0,
         max_docs: int = 6,
-        max_chars_per_doc: int = 1200,
+        max_chars_per_doc: int = 4000,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> AsyncIterator[str]:
         context = self.build_context(
             retrieved_docs,
             max_docs=max_docs,
             max_chars_per_doc=max_chars_per_doc,
         )
+        safe_query = sanitize_user_text(query)
         prompt = get_prompt(
             "answer_generation_rag",
             context=context,
-            query=query,
+            query=safe_query,
         )
         stream = await self.client.chat.completions.create(
             model=settings.GENERATE_MODEL,
             messages=[
-                {"role": "system", "content": "You are a retrieval-grounded assistant."},
+                {"role": "system", "content": _RAG_SYSTEM_MESSAGE},
                 {"role": "user", "content": prompt},
             ],
             temperature=(temperature if temperature is not None else settings.TEMPERATURE_MAIN),
             max_tokens=(max_tokens if max_tokens is not None else settings.MAX_GEN_MAIN),
             stream=True,
+            stream_options={"include_usage": True},
             timeout=timeout,
         )
-        async for chunk in stream:
-            if not chunk.choices:
-                continue
-            delta = chunk.choices[0].delta
-            if not delta:
-                continue
-            piece = delta.content
-            if piece:
-                yield piece
+        usage_in = 0
+        usage_out = 0
+        try:
+            async for chunk in stream:
+                if getattr(chunk, "usage", None):
+                    usage_in = int(chunk.usage.prompt_tokens or 0)
+                    usage_out = int(chunk.usage.completion_tokens or 0)
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
+                if not delta:
+                    continue
+                piece = delta.content
+                if piece:
+                    yield piece
+        finally:
+            if usage_in or usage_out:
+                try:
+                    from src.hybridrag.utils.cost_tracker import record as _cost_record
+                    _cost_record(
+                        session_id=session_id,
+                        user_id=user_id,
+                        model=settings.GENERATE_MODEL,
+                        tokens_in=usage_in,
+                        tokens_out=usage_out,
+                        feature="answer",
+                    )
+                except Exception:
+                    pass
 
     async def answer_text(
         self,
@@ -124,9 +179,11 @@ class AnswerGenerator:
         retrieved_docs: List[Dict[str, Any]],
         timeout: float = 20.0,
         max_docs: int = 6,
-        max_chars_per_doc: int = 1200,
+        max_chars_per_doc: int = 4000,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> str:
         chunks: List[str] = []
         async for piece in self.stream_answer(
@@ -137,6 +194,8 @@ class AnswerGenerator:
             max_chars_per_doc=max_chars_per_doc,
             temperature=temperature,
             max_tokens=max_tokens,
+            session_id=session_id,
+            user_id=user_id,
         ):
             chunks.append(piece)
         return "".join(chunks)
@@ -158,7 +217,7 @@ if __name__ == "__main__":
         bm25_k: int | None = None,
         rerank_top_k: int | None = None,
         max_docs: int = 6,
-        max_chars_per_doc: int = 1200,
+        max_chars_per_doc: int = 4000,
         gen_timeout: float = 25.0,
     ) -> None:
         # --- Load searcher once (indexes + reranker) ---

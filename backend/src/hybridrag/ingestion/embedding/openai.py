@@ -1,8 +1,21 @@
 from typing import List, Union
 import asyncio
+import logging
 import numpy as np
 from openai import OpenAI, AsyncOpenAI
 from src.config.settings import settings
+
+_log = logging.getLogger(__name__)
+
+
+def _track(model: str, tokens_in: int, feature: str = "embed") -> None:
+    if not tokens_in:
+        return
+    try:
+        from src.hybridrag.utils.cost_tracker import record as _cost_record
+        _cost_record(model=model, tokens_in=tokens_in, tokens_out=0, feature=feature)
+    except Exception:
+        _log.debug("embed cost tracking failed", exc_info=True)
 
 
 class OpenAIEmbedder:
@@ -20,6 +33,9 @@ class OpenAIEmbedder:
 
     async def embed_text(self, text: str) -> np.ndarray:
         response = await self.async_client.embeddings.create(input=text, model=self.model, dimensions=self.dimension)
+        usage = getattr(response, "usage", None)
+        if usage is not None:
+            _track(self.model, int(getattr(usage, "prompt_tokens", 0) or 0))
         embedding = response.data[0].embedding
         return np.array(embedding, dtype=np.float32)
 
@@ -34,6 +50,9 @@ class OpenAIEmbedder:
         async def embed_batch(batch: List[str]) -> List[np.ndarray]:
             async with semaphore:
                 response = await self.async_client.embeddings.create(input=batch, model=self.model, dimensions=self.dimension)
+                usage = getattr(response, "usage", None)
+                if usage is not None:
+                    _track(self.model, int(getattr(usage, "prompt_tokens", 0) or 0))
                 return [
                     np.array(d.embedding, dtype=np.float32)
                     for d in response.data

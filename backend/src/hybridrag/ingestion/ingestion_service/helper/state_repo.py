@@ -2,8 +2,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-import psycopg2
 from psycopg2.extras import RealDictCursor
+
+from src.hybridrag.utils.db_pool import borrow
 
 
 @dataclass(frozen=True)
@@ -22,9 +23,6 @@ class FileStateRepo:
         self.table = table
         self._ensure_table()
 
-    def _conn(self):
-        return psycopg2.connect(self.dsn)
-
     def _ensure_table(self):
         sql = f"""
         CREATE TABLE IF NOT EXISTS {self.schema}.{self.table} (
@@ -37,9 +35,10 @@ class FileStateRepo:
             PRIMARY KEY (bucket, object_key)
         );
         """
-        with self._conn() as c:
+        with borrow(self.dsn) as c:
             with c.cursor() as cur:
                 cur.execute(sql)
+            c.commit()
 
     def get(self, bucket: str, key: str) -> Optional[FileState]:
         sql = f"""
@@ -47,7 +46,7 @@ class FileStateRepo:
         FROM {self.schema}.{self.table}
         WHERE bucket=%s AND object_key=%s
         """
-        with self._conn() as c:
+        with borrow(self.dsn) as c:
             with c.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (bucket, key))
                 row = cur.fetchone()
@@ -91,7 +90,7 @@ class FileStateRepo:
         LIMIT %s OFFSET %s
         """
         params.extend([limit, offset])
-        with self._conn() as c:
+        with borrow(self.dsn) as c:
             with c.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, tuple(params))
                 rows = cur.fetchall()
@@ -128,7 +127,7 @@ class FileStateRepo:
         ORDER BY updated_at DESC
         LIMIT %s
         """
-        with self._conn() as c:
+        with borrow(self.dsn) as c:
             with c.cursor(cursor_factory=RealDictCursor) as cur:
                 params.append(limit)
                 cur.execute(sql, tuple(params))
@@ -153,12 +152,14 @@ class FileStateRepo:
         DO UPDATE SET etag=EXCLUDED.etag, version_id=EXCLUDED.version_id,
                       file_id=EXCLUDED.file_id, updated_at=NOW()
         """
-        with self._conn() as c:
+        with borrow(self.dsn) as c:
             with c.cursor() as cur:
                 cur.execute(sql, (state.bucket, state.key, state.etag, state.version_id, state.file_id))
+            c.commit()
 
     def delete(self, bucket: str, key: str) -> None:
         sql = f"DELETE FROM {self.schema}.{self.table} WHERE bucket=%s AND object_key=%s"
-        with self._conn() as c:
+        with borrow(self.dsn) as c:
             with c.cursor() as cur:
                 cur.execute(sql, (bucket, key))
+            c.commit()

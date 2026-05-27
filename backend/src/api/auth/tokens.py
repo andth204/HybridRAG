@@ -4,9 +4,10 @@ import secrets
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import Json, RealDictCursor
+
+from src.hybridrag.utils.db_pool import borrow
 
 
 @dataclass(frozen=True)
@@ -25,9 +26,6 @@ class AuthTokenRepo:
         self.dsn = dsn
         self.schema = schema
         self.table = table
-
-    def _conn(self):
-        return psycopg2.connect(self.dsn)
 
     @staticmethod
     def _hash_token(raw_token: str) -> str:
@@ -53,7 +51,7 @@ class AuthTokenRepo:
         qualified_expires_index_name = f"{self.schema}.{expires_index_name}"
         table_identifier = sql.Identifier(self.schema, self.table)
 
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT to_regclass(%s)", (qualified_table_name,))
                 table_exists = cur.fetchone()[0] is not None
@@ -93,6 +91,7 @@ class AuthTokenRepo:
                             table_identifier,
                         )
                     )
+            conn.commit()
 
     def issue(
         self,
@@ -109,7 +108,7 @@ class AuthTokenRepo:
             token_hash, user_id, token_type, expires_at, metadata
         ) VALUES (%s, %s, %s, %s, %s)
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     sql,
@@ -121,6 +120,7 @@ class AuthTokenRepo:
                         Json(metadata) if metadata is not None else None,
                     ),
                 )
+            conn.commit()
         return raw_token
 
     def get_valid(self, raw_token: str, token_type: str) -> Optional[AuthTokenRecord]:
@@ -133,7 +133,7 @@ class AuthTokenRepo:
           AND revoked = FALSE
           AND expires_at > NOW()
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (token_hash, token_type))
                 row = cur.fetchone()
@@ -146,10 +146,12 @@ class AuthTokenRepo:
         SET revoked = TRUE
         WHERE token_hash = %s AND revoked = FALSE
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (token_hash,))
-                return cur.rowcount > 0
+                revoked = cur.rowcount > 0
+            conn.commit()
+            return revoked
 
     def consume_refresh(self, raw_token: str) -> Optional[AuthTokenRecord]:
         token_hash = self._hash_token(raw_token)
@@ -167,14 +169,16 @@ class AuthTokenRepo:
         SET revoked = TRUE
         WHERE token_hash = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(select_sql, (token_hash,))
                 row = cur.fetchone()
                 if row is None:
                     return None
                 cur.execute(update_sql, (token_hash,))
-                return self._row_to_record(row)
+                record = self._row_to_record(row)
+            conn.commit()
+            return record
 
     def revoke_user_tokens(self, user_id: str, token_type: Optional[str] = None) -> int:
         if token_type:
@@ -191,7 +195,9 @@ class AuthTokenRepo:
             WHERE user_id = %s AND revoked = FALSE
             """
             params = (user_id,)
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, params)
-                return cur.rowcount
+                rowcount = cur.rowcount
+            conn.commit()
+            return rowcount

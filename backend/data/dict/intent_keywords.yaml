@@ -1,0 +1,298 @@
+# Keyword / regex hints per fine-grained intent, used by the Phase 4A
+# KeywordIntentClassifier (see backend/src/hybridrag/router/intent_classifier.py).
+#
+# All entries are grounded in real golden queries (data/eval/golden_v0.jsonl)
+# and the sample corpora (qa_fb.md, tuyen_sinh_247.md, Điểm 20**.md,
+# Thông báo tuyển sinh 2026.txt).
+#
+# Matching is case-insensitive and diacritic-insensitive — both
+# "điểm chuẩn" and "diem chuan" hit the same key. Order of intents
+# below also defines the priority tiebreaker (chitchat first so trivial
+# pleasantries do not leak into retrieval — but its weight is low so a
+# stronger info-intent keyword still wins).
+
+intents:
+  # ------------------------------------------------------------------ #
+  # Small-talk / pleasantries. Low weight so a co-occurring info intent
+  # ("chào, cho mình hỏi điểm chuẩn") wins.
+  # ------------------------------------------------------------------ #
+  chitchat:
+    keywords:
+      - "xin chào"
+      - "chào thầy"
+      - "chào cô"
+      - "chào bot"
+      - "chào"
+      - "hi"
+      - "hi bot"
+      - "hello"
+      - "helo"
+      - "halo"
+      - "holla"
+      - "alo"
+      - "cảm ơn"
+      - "cám ơn"
+      - "thanks"
+      - "thank you"
+      - "tạm biệt"
+      - "bye"
+      - "hẹn gặp lại"
+      - "ok"
+      - "oke"
+      - "bạn là ai"
+      - "bạn có khỏe"
+      - "bạn có thể giúp"
+      - "bạn có giúp được"
+      - "kể chuyện cười"
+      - "trường mình nhiều bạn gái"
+      - "nhiều bạn gái"
+      - "nhiều gái xinh"
+      - "tư vấn chuyện tình cảm"
+    regex: []
+    weight: 0.6
+
+  # ------------------------------------------------------------------ #
+  # Specific admission-score lookups — handled by structured KG, not RAG.
+  # ------------------------------------------------------------------ #
+  score_lookup:
+    keywords:
+      - "điểm chuẩn"
+      - "điểm trúng tuyển"
+      - "điểm đầu vào"
+      - "điểm xét tuyển"
+      - "điểm thi"
+      - "điểm ngành"
+      - "diem chuan"
+      - "diem trung tuyen"
+      - "diem dau vao"
+      - "diem xet tuyen"
+      - "bao nhiêu điểm"
+      - "lấy bao nhiêu điểm"
+      - "lấy mấy điểm"
+      - "điểm thpt"
+      - "điểm học bạ"
+      - "điểm chuẩn ngành"
+      - "ngưỡng điểm"
+      - "điểm hsa"
+      - "điểm tsa"
+      - "điểm v-sat"
+      - "điểm vsat"
+      - "đỗ được"
+      - "đậu được"
+      - "điểm sàn"
+    regex:
+      - "\\b20\\d{2}\\b\\s+(điểm|diem)"
+      - "(điểm|diem)\\s+\\S+\\s+\\b20\\d{2}\\b"
+    weight: 1.4
+
+  # ------------------------------------------------------------------ #
+  # Tuition lookups — also handled by structured KG.
+  # ------------------------------------------------------------------ #
+  tuition_lookup:
+    keywords:
+      - "học phí"
+      - "hoc phi"
+      - "chi phí học"
+      - "phí học kỳ"
+      - "phí một tín chỉ"
+      - "phí tín chỉ"
+      - "đóng bao nhiêu"
+      - "đóng học phí"
+      - "miễn học phí"
+      - "miễn 100%"
+      - "miễn giảm học phí"
+      - "đóng tiền"
+      - "tổng chi phí"
+      - "chi phí 4 năm"
+      - "chi phí sinh hoạt"
+      - "học phí ngành"
+      - "học phí khối"
+      - "học phí tăng"
+      - "1 tháng bao nhiêu"
+      - "một tháng bao nhiêu"
+      - "/tháng"
+    regex: []
+    weight: 1.3
+
+  # ------------------------------------------------------------------ #
+  # Program / major content — what is taught, learning outcomes, careers.
+  # Lower weight to avoid stealing queries whose "ngành" is just a noun.
+  # ------------------------------------------------------------------ #
+  program_info:
+    keywords:
+      - "chương trình đào tạo"
+      - "đào tạo gì"
+      - "học gì"
+      - "học những gì"
+      - "học kiến thức gì"
+      - "ra trường làm"
+      - "ra trường làm gì"
+      - "ra trường làm nghề"
+      - "ra trường có"
+      - "ra trường"
+      - "học xong"
+      - "có dễ xin việc"
+      - "việc làm"
+      - "thế mạnh"
+      - "chuẩn đầu ra"
+      - "tổ hợp xét tuyển"
+      - "tổ hợp môn"
+      - "chuyên ngành"
+      - "khoa"
+      - "mã ngành"
+      - "kiến thức"
+      - "thực hành"
+      - "tỷ lệ việc làm"
+      - "học mấy năm"
+      - "bao nhiêu năm"
+      - "chỉ tiêu"
+      - "lớp tài năng"
+      - "sinh viên tài năng"
+      - "lớp chất lượng cao"
+      - "lớp sinh viên"
+      - "ngành đào tạo"
+      - "ngành nào"
+      - "ngành nào và"
+      - "những ngành"
+      - "danh sách ngành"
+      - "quyền lợi"
+      - "công nhân"
+      - "làm nghề"
+      - "bao nhiêu ngành"
+    regex: []
+    weight: 0.85
+
+  # ------------------------------------------------------------------ #
+  # Admission method (THPT / học bạ / V-SAT / HSA / TSA / kết hợp / IELTS).
+  # ------------------------------------------------------------------ #
+  admission_method:
+    keywords:
+      - "phương thức"
+      - "phương thức xét tuyển"
+      - "phuong thuc"
+      - "xét tuyển"
+      - "xet tuyen"
+      - "xét học bạ"
+      - "xét điểm"
+      - "xét tuyển kết hợp"
+      - "xét tuyển bằng"
+      - "xét tuyển thẳng"
+      - "điều kiện xét tuyển"
+      - "đối tượng xét tuyển"
+      - "đăng ký xét tuyển"
+      - "hồ sơ"
+      - "hồ sơ xét tuyển"
+      - "ho so xet tuyen"
+      - "v-sat"
+      - "vsat"
+      - "hsa"
+      - "tsa"
+      - "đánh giá năng lực"
+      - "đánh giá tư duy"
+      - "ielts"
+      - "chứng chỉ"
+      - "chứng chỉ ngoại ngữ"
+      - "quy đổi"
+      - "nguyện vọng"
+      - "trúng tuyển sớm"
+      - "xét tuyển bổ sung"
+      - "đăng ký bằng"
+    regex: []
+    weight: 1.0
+
+  # ------------------------------------------------------------------ #
+  # Deadlines / dates / "khi nào".
+  # ------------------------------------------------------------------ #
+  deadline:
+    keywords:
+      - "hạn nộp"
+      - "thời hạn"
+      - "deadline"
+      - "khi nào"
+      - "bao giờ"
+      - "bao gio"
+      - "lúc nào"
+      - "lịch xét tuyển"
+      - "thời gian xét tuyển"
+      - "thời gian nộp"
+      - "thời gian đăng ký"
+      - "thời gian công bố"
+      - "công bố kết quả"
+      - "công bố"
+      - "thông báo lịch"
+      - "tháng mấy"
+      - "ngày nào"
+      - "khi nao"
+      - "lúc nao"
+      - "đợt 1"
+      - "đợt bổ sung"
+      - "từ ngày"
+      - "đến ngày"
+    regex:
+      - "\\bngày\\s+\\d"
+      - "\\bhạn\\b"
+      - "\\b\\d{1,2}/\\d{1,2}(?:/\\d{2,4})?"
+    weight: 1.25
+
+  # ------------------------------------------------------------------ #
+  # Comparison questions — "so sánh", "khác nhau", "nên chọn ... hay ...".
+  # ------------------------------------------------------------------ #
+  compare:
+    keywords:
+      - "so sánh"
+      - "so voi"
+      - "so với"
+      - "khác nhau"
+      - "khác gì"
+      - "chênh nhau"
+      - "chênh lệch"
+      - "hay là"
+      - "nên chọn"
+      - "nên học"
+      - "hay cơ sở"
+      - "tốt hơn"
+      - "cao hơn"
+      - "thấp hơn"
+      - "giữa"
+      - "đối chiếu"
+      - "có khác"
+      - "có giống"
+    regex:
+      - "\\bhay\\s+(?:là\\s+)?\\S+\\s*\\?"
+      - "\\b20\\d{2}\\s+(?:và|hay|so với)\\s+20\\d{2}\\b"
+      - "\\bgiữa\\s+\\S+\\s+(?:và|hay)\\s+\\S+"
+      - "\\b(?:THPT|học bạ)\\s+(?:và|hay|với)\\s+(?:THPT|học bạ)\\b"
+    weight: 1.5
+
+  # ------------------------------------------------------------------ #
+  # Catch-all: school facts, campus, contact, scholarship, KTX, refusal.
+  # Keep weight modest so it loses ties to the specific lookups.
+  # ------------------------------------------------------------------ #
+  general_qa:
+    keywords:
+      - "cơ sở"
+      - "địa chỉ"
+      - "ở đâu"
+      - "liên hệ"
+      - "số điện thoại"
+      - "email"
+      - "website"
+      - "fanpage"
+      - "facebook"
+      - "ký túc xá"
+      - "ktx"
+      - "học bổng"
+      - "quỹ học bổng"
+      - "trường có"
+      - "mã trường"
+      - "tên tiếng anh"
+      - "thành lập"
+      - "lịch sử"
+      - "hiệu trưởng"
+      - "ban giám hiệu"
+      - "khuôn viên"
+      - "cơ sở vật chất"
+      - "ngành y khoa"
+      - "có ngành"
+    regex: []
+    weight: 0.75

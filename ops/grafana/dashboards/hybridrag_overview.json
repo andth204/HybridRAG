@@ -1,0 +1,146 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requests/sec by route",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "sum by (route) (rate(hybridrag_http_requests_total[5m]))", "legendFormat": "{{route}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP latency p95",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(hybridrag_http_request_seconds_bucket[5m])) by (le, route))", "legendFormat": "{{route}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM tokens/min",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "sum by (model, direction) (rate(hybridrag_llm_tokens_total[1m])) * 60", "legendFormat": "{{model}} / {{direction}}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "LLM cost USD (24h)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "sum(increase(hybridrag_llm_cost_usd_total[24h])) by (model)", "legendFormat": "{{model}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 4 }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval p95",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(hybridrag_retrieval_seconds_bucket[5m])) by (le, backend))", "legendFormat": "{{backend}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "Generation p95",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(hybridrag_generation_seconds_bucket[5m])) by (le, model))", "legendFormat": "{{model}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "type": "piechart",
+      "title": "Intent breakdown (1h)",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "sum by (intent) (rate(hybridrag_intent_total[1h]))", "legendFormat": "{{intent}}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Refusals/hour",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "rate(hybridrag_refusal_total[1h]) * 3600", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Clarifications/hour by reason",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "sum by (reason) (rate(hybridrag_clarification_total[1h])) * 3600", "legendFormat": "{{reason}}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Verification failures/hour",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "rate(hybridrag_verification_failures_total[1h]) * 3600", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tool call success rate",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "sum(rate(hybridrag_tool_calls_total{status=\"ok\"}[5m])) / clamp_min(sum(rate(hybridrag_tool_calls_total[5m])), 0.001)", "legendFormat": "ok ratio", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP error rate (5xx)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "sum(rate(hybridrag_http_requests_total{status=~\"5..\"}[5m])) / clamp_min(sum(rate(hybridrag_http_requests_total[5m])), 0.001)", "legendFormat": "5xx ratio", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] }
+    },
+    {
+      "type": "stat",
+      "title": "Active sessions (24h)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "expr": "hybridrag_active_sessions", "refId": "A" }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["hybridrag", "rag", "admissions"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "HybridRAG Overview",
+  "uid": "hybridrag-overview",
+  "version": 1,
+  "weekStart": ""
+}

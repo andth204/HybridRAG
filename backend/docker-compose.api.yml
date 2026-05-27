@@ -11,18 +11,22 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    gpus: all
+    env_file:
+      - .env
     environment:
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
       PYTHONPATH: /app
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      MINIO_ENDPOINT: http://minio:9000
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      POSTGRES_HOST: utehy-postgres
+      POSTGRES_PORT: "5432"
+      MINIO_ENDPOINT: http://utehy-minio:9000
+      KAFKA_BOOTSTRAP_SERVERS: utehy-kafka:29092
+      WEAVIATE_URL: http://hybridrag-weaviate:8080
+      WEAVIATE_GRPC_HOST: hybridrag-weaviate
+      WEAVIATE_GRPC_PORT: "50051"
+      RATE_LIMIT_ENABLED: "False"
+      METRICS_ENABLED: "True"
     command: python -m uvicorn src.api.app:app --host 0.0.0.0 --port 8000
     ports:
-      - "8000:8000"
+      - "8001:8000"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "python", "-c", "import socket; s = socket.create_connection(('localhost', 8000), timeout=3); s.close()" ]

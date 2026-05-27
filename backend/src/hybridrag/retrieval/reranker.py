@@ -8,7 +8,10 @@ from src.config.settings import settings
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 log = logging.getLogger(__name__)
-_RERANK_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="reranker")
+_RERANK_EXECUTOR = ThreadPoolExecutor(
+    max_workers=int(getattr(settings, "RERANK_WORKERS", 2)),
+    thread_name_prefix="reranker",
+)
 
 
 class Reranker:
@@ -31,26 +34,60 @@ class Reranker:
         self._loaded = False
 
     def preload(self) -> None:
+        """Load the cross-encoder onto CUDA if available, else skip.
+
+        Behaviour:
+
+        * GPU present → load the model, store the shared handles, set
+          ``self.model`` so :meth:`rerank` runs.
+        * GPU absent → log a warning and leave ``self.model = None``.
+          :meth:`rerank` / :meth:`arerank` then short-circuit to a
+          plain top-k cut, so the retrieval pipeline degrades
+          gracefully instead of crashing.
+
+        This is the contract HybridSearcher / WeaviateHybridSearcher
+        rely on (they check ``reranker.model`` before invoking rerank).
+        """
         if self._loaded:
             return
 
         with self.__class__._init_lock:
             if not self.__class__._shared_loaded:
                 if not torch.cuda.is_available():
-                    raise RuntimeError(
-                        "Reranker requires CUDA GPU, but CUDA is not available. "
-                        "Install a CUDA-enabled PyTorch build and run on a GPU machine."
+                    log.warning(
+                        "Reranker: CUDA not available — skipping reranker load. "
+                        "Retrieval will fall back to the raw hybrid score "
+                        "ordering. Install a CUDA-enabled PyTorch build and "
+                        "run on a GPU machine to enable reranking."
                     )
+                    # Mark as loaded so we don't retry on every call;
+                    # ``self.model`` stays None so rerank is skipped.
+                    self.__class__._shared_loaded = True
+                    self.__class__._shared_device = "cpu"
+                    self._loaded = True
+                    return
 
                 log.info("Reranker: loading model '%s' ...", self._model_name)
-                tokenizer = AutoTokenizer.from_pretrained(self._model_name, trust_remote_code=True)
-                hf_model = AutoModelForSequenceClassification.from_pretrained(
-                    self._model_name,
-                    trust_remote_code=True,
-                )
-                hf_model.eval()
-                device = "cuda"
-                hf_model = hf_model.to(device)
+                try:
+                    tokenizer = AutoTokenizer.from_pretrained(self._model_name, trust_remote_code=True)
+                    hf_model = AutoModelForSequenceClassification.from_pretrained(
+                        self._model_name,
+                        trust_remote_code=True,
+                    )
+                    hf_model.eval()
+                    device = "cuda"
+                    hf_model = hf_model.to(device)
+                except Exception as exc:  # noqa: BLE001
+                    # OOM, model-file corruption, network failure during
+                    # download — all best-effort. Log and skip rerank.
+                    log.warning(
+                        "Reranker: model load failed (%s) — skipping rerank",
+                        exc,
+                    )
+                    self.__class__._shared_loaded = True
+                    self.__class__._shared_device = "cpu"
+                    self._loaded = True
+                    return
 
                 self.__class__._shared_tokenizer = tokenizer
                 self.__class__._shared_hf_model = hf_model
@@ -60,6 +97,10 @@ class Reranker:
                 self.__class__._shared_loaded = True
                 log.info("Reranker: ready on device=%s", device)
 
+        # Bind shared handles to this instance. When the GPU-fallback
+        # branch above ran, ``_shared_model_name`` stays None and
+        # ``self.model`` remains None — that's the signal the rest of
+        # the pipeline uses to bypass rerank.
         self._tokenizer = self.__class__._shared_tokenizer
         self._hf_model = self.__class__._shared_hf_model
         self._torch = self.__class__._shared_torch
@@ -68,13 +109,22 @@ class Reranker:
         self._loaded = True
 
     def _score_pairs(self, query: str, docs: List[str]) -> List[float]:
+        """Return per-pair relevance probabilities in ``[0, 1]``.
+
+        The cross-encoder head emits raw logits (Jina v2 typically in
+        ``[-10, +10]``). We squash through sigmoid so downstream gates
+        — clarifier ``LOW_RECALL_THRESHOLD=0.30`` and handoff
+        ``LOW_RECALL_THRESHOLD=0.15`` — read a calibrated probability
+        rather than a sign-ambiguous raw logit.
+        """
         torch = self._torch
         pairs = [[query, d] for d in docs]
         enc = self._tokenizer(pairs, padding=True, truncation=True, max_length=512, return_tensors="pt")
         enc = {k: v.to(self._device) for k, v in enc.items()}
         with torch.no_grad():
             logits = self._hf_model(**enc).logits
-        scores = logits.squeeze(-1).tolist()
+            probs = torch.sigmoid(logits)
+        scores = probs.squeeze(-1).tolist()
         return [scores] if isinstance(scores, float) else scores
 
     def rerank(

@@ -1,15 +1,19 @@
 pydantic==2.10.3
 pydantic-settings==2.6.1
 python-dotenv==1.0.1
+pyyaml>=6.0
+rapidfuzz>=3.10
 
 openai==1.59.3
 langchain-openai==0.2.14
 langchain-core==0.3.28
 langchain-community==0.3.13
+langchain-text-splitters>=0.3.0,<2
 
 numpy==1.26.4
 faiss-cpu==1.9.0.post1
 rank-bm25==0.2.2
+weaviate-client>=4.9,<5
 
 sentence-transformers==3.3.1
 pyvi==0.1.1

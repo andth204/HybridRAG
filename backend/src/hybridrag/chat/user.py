@@ -2,8 +2,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-import psycopg2
 from psycopg2.extras import RealDictCursor
+
+from src.hybridrag.utils.db_pool import borrow
 
 USER_ROLE_MANAGER = "manager"
 USER_ROLE_USER = "user"
@@ -27,9 +28,6 @@ class UserRepo:
     def __init__(self, dsn: str):
         self.dsn = dsn
 
-    def _conn(self):
-        return psycopg2.connect(self.dsn)
-
     @staticmethod
     def _row_to_user(row: dict) -> User:
         return User(
@@ -46,7 +44,7 @@ class UserRepo:
         )
 
     def ensure_schema(self) -> None:
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
@@ -89,6 +87,7 @@ class UserRepo:
                         ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE
                         """
                     )
+            conn.commit()
 
     def get_by_id(self, user_id: str) -> Optional[User]:
         sql = """
@@ -115,7 +114,7 @@ class UserRepo:
         FROM users u
         WHERE u.id = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (user_id,))
                 row = cur.fetchone()
@@ -137,7 +136,7 @@ class UserRepo:
         FROM users u
         WHERE u.id = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (user_id,))
                 row = cur.fetchone()
@@ -168,7 +167,7 @@ class UserRepo:
         FROM users u
         WHERE u.email = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (email,))
                 row = cur.fetchone()
@@ -215,7 +214,7 @@ class UserRepo:
             created_at,
             updated_at
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # Serialize first-user role assignment so only one first login gets manager.
                 cur.execute("SELECT pg_advisory_xact_lock(%s)", (915202603,))
@@ -223,13 +222,15 @@ class UserRepo:
                 existing_user = cur.fetchone()
                 if existing_user:
                     cur.execute(update_sql, (google_id, username, email))
-                    return self._row_to_user(cur.fetchone())
-
-                cur.execute("SELECT COUNT(*) AS total_users FROM users")
-                total_users = int(cur.fetchone()["total_users"])
-                assigned_role = USER_ROLE_MANAGER if total_users == 0 else USER_ROLE_USER
-                cur.execute(insert_sql, (google_id, email, username, assigned_role))
-                return self._row_to_user(cur.fetchone())
+                    user = self._row_to_user(cur.fetchone())
+                else:
+                    cur.execute("SELECT COUNT(*) AS total_users FROM users")
+                    total_users = int(cur.fetchone()["total_users"])
+                    assigned_role = USER_ROLE_MANAGER if total_users == 0 else USER_ROLE_USER
+                    cur.execute(insert_sql, (google_id, email, username, assigned_role))
+                    user = self._row_to_user(cur.fetchone())
+            conn.commit()
+            return user
 
     def list_users(self, *, limit: int = 100, offset: int = 0) -> list[User]:
         sql = """
@@ -257,7 +258,7 @@ class UserRepo:
         ORDER BY u.created_at DESC
         LIMIT %s OFFSET %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (limit, offset))
                 rows = cur.fetchall()
@@ -283,11 +284,13 @@ class UserRepo:
             created_at,
             updated_at
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (role, user_id))
                 row = cur.fetchone()
-                return self._row_to_user(row) if row else None
+                user = self._row_to_user(row) if row else None
+            conn.commit()
+            return user
 
     def update_login_access(self, *, user_id: str, is_blocked: bool) -> Optional[User]:
         sql = """
@@ -306,28 +309,34 @@ class UserRepo:
             created_at,
             updated_at
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (is_blocked, user_id))
                 row = cur.fetchone()
-                return self._row_to_user(row) if row else None
+                user = self._row_to_user(row) if row else None
+            conn.commit()
+            return user
 
     def delete_user(self, *, user_id: str) -> bool:
         sql = """
         DELETE FROM users
         WHERE id = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (user_id,))
-                return cur.rowcount > 0
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
 
     def delete_by_email(self, *, email: str) -> bool:
         sql = """
         DELETE FROM users
         WHERE email = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (email.strip().lower(),))
-                return cur.rowcount > 0
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted

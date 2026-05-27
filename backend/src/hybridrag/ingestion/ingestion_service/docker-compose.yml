@@ -9,15 +9,20 @@ services:
     working_dir: /app
     volumes:
       - ../../../..:/app
+    env_file:
+      - ../../../../.env
     environment:
       PYTHONPATH: /app
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      MINIO_ENDPOINT: http://minio:9000
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      POSTGRES_HOST: utehy-postgres
+      POSTGRES_PORT: "5432"
+      MINIO_ENDPOINT: http://utehy-minio:9000
+      KAFKA_BOOTSTRAP_SERVERS: utehy-kafka:29092
+      WEAVIATE_URL: http://hybridrag-weaviate:8080
+      WEAVIATE_GRPC_HOST: hybridrag-weaviate
+      WEAVIATE_GRPC_PORT: "50051"
       BM25_CACHE_DIR: ${BM25_CACHE_DIR}
       FAISS_CACHE_DIR: ${FAISS_CACHE_DIR}
-    command: python src/hybridrag/ingestion/ingestion_service/processor.py
+    command: python -u src/hybridrag/ingestion/ingestion_service/weaviate_processor.py
     restart: unless-stopped
     networks: [ utehy-network ]
 networks:

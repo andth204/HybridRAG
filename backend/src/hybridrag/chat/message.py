@@ -2,8 +2,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
-import psycopg2
 from psycopg2.extras import Json, RealDictCursor
+
+from src.hybridrag.utils.db_pool import borrow
 
 
 @dataclass(frozen=True)
@@ -22,9 +23,6 @@ class ChatMessage:
 class ChatMessageRepo:
     def __init__(self, dsn: str):
         self.dsn = dsn
-
-    def _conn(self):
-        return psycopg2.connect(self.dsn)
 
     @staticmethod
     def _row_to_message(row: dict) -> ChatMessage:
@@ -66,7 +64,7 @@ class ChatMessageRepo:
         RETURNING id, session_id, role, content, parent_message_id,
                   revision_number, is_edited, metadata, created_at
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     sql,
@@ -80,7 +78,9 @@ class ChatMessageRepo:
                         Json(metadata) if metadata is not None else None,
                     ),
                 )
-                return self._row_to_message(cur.fetchone())
+                message = self._row_to_message(cur.fetchone())
+            conn.commit()
+            return message
 
     def get(self, message_id: str) -> Optional[ChatMessage]:
         sql = """
@@ -89,7 +89,7 @@ class ChatMessageRepo:
         FROM chat_messages
         WHERE id = %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (message_id,))
                 row = cur.fetchone()
@@ -112,7 +112,7 @@ class ChatMessageRepo:
         ORDER BY created_at {order}
         LIMIT %s OFFSET %s
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (session_id, limit, offset))
                 rows = cur.fetchall()
@@ -130,7 +130,7 @@ class ChatMessageRepo:
         ) sub
         ORDER BY created_at ASC
         """
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, (session_id, n))
                 rows = cur.fetchall()
@@ -164,7 +164,7 @@ class ChatMessageRepo:
             sql = base_sql + " ORDER BY m.created_at DESC LIMIT %s OFFSET %s"
             params = (user_id, f"%{query}%", limit, offset)
 
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql, params)
                 rows = cur.fetchall()
@@ -177,14 +177,18 @@ class ChatMessageRepo:
         else:
             sql = "DELETE FROM chat_messages WHERE id = %s"
             params = (message_id,)
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, params)
-                return cur.rowcount > 0
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
 
     def delete_by_session(self, session_id: str) -> int:
         sql = "DELETE FROM chat_messages WHERE session_id = %s"
-        with self._conn() as conn:
+        with borrow(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (session_id,))
-                return cur.rowcount
+                rowcount = cur.rowcount
+            conn.commit()
+            return rowcount

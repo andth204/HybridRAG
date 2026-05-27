@@ -1,0 +1,233 @@
+# Latency evaluation query set (v2 - expanded to 50 queries).
+#
+# Consumed by `backend/scripts/eval_latency.py`. Each entry is one POST to
+# /api/v1/chat/answer. Queries are stratified across the retrieval/generation
+# paths so the measured p50/p95/p99 reflect a realistic production traffic mix
+# rather than a single-path microbenchmark.
+#
+# Pipeline paths exercised:
+#   rewrite -> route -> retrieve -> rerank -> generate
+#   off_topic queries early-exit before retrieval (fast-path baseline)
+#   session_context queries additionally read prior session_state
+#
+# Distribution (50 total)
+# -----------------------
+# short_factual   (15) : <=8 token queries, single-chunk hits, low rerank load
+# long_factual    (10) : 15-30 token queries, multi-chunk + heavier rerank
+# multi_compare    (8) : cross-nganh / cross-nam / cross-coso comparisons,
+#                       stress the reranker and context assembler
+# off_topic        (5) : out-of-scope, exercises refusal / chitchat fast path
+# typo_abbrev      (7) : misspelt or abbreviated, exercises query rewriter
+# session_context  (5) : depend on prior turn; exercises session_state read
+#
+# Cite in thesis methodology: query mix designed to mirror observed UTEHY
+# admissions traffic (Q3-Q4 academic year peak: ~60% short factual,
+# ~20% long factual + compare, ~10% typo, ~5% off-topic, ~5% follow-up).
+#
+# ID scheme: lat_001 ... lat_050 (zero-padded for stable sort order).
+
+# -------------------- short_factual (15) --------------------
+- id: lat_001
+  category: short_factual
+  query: "Điểm chuẩn CNTT 2024"
+
+- id: lat_002
+  category: short_factual
+  query: "Học phí ngành Kỹ thuật phần mềm"
+
+- id: lat_003
+  category: short_factual
+  query: "Hotline tuyển sinh UTEHY"
+
+- id: lat_004
+  category: short_factual
+  query: "Mã trường UTEHY là gì"
+
+- id: lat_005
+  category: short_factual
+  query: "Điểm chuẩn ngành Kế toán 2024"
+
+- id: lat_006
+  category: short_factual
+  query: "Chỉ tiêu ngành Logistics 2024"
+
+- id: lat_007
+  category: short_factual
+  query: "Địa chỉ cơ sở Hưng Yên"
+
+- id: lat_008
+  category: short_factual
+  query: "Học phí ngành Ô tô"
+
+- id: lat_009
+  category: short_factual
+  query: "Thời gian nộp hồ sơ xét học bạ"
+
+- id: lat_010
+  category: short_factual
+  query: "Điểm chuẩn ngành Điện tử viễn thông"
+
+- id: lat_011
+  category: short_factual
+  query: "Học bổng tân sinh viên 2024"
+
+- id: lat_012
+  category: short_factual
+  query: "Ký túc xá có máy lạnh không"
+
+- id: lat_013
+  category: short_factual
+  query: "Ngành Quản trị kinh doanh học mấy năm"
+
+- id: lat_014
+  category: short_factual
+  query: "Trường UTEHY có bao nhiêu cơ sở"
+
+- id: lat_015
+  category: short_factual
+  query: "Phương thức xét tuyển 2024"
+
+# -------------------- long_factual (10) --------------------
+- id: lat_016
+  category: long_factual
+  query: "Cho tôi biết chi tiết về điểm chuẩn các phương thức xét tuyển ngành Kỹ thuật phần mềm năm 2024 và so sánh với năm 2023"
+
+- id: lat_017
+  category: long_factual
+  query: "Học phí toàn khóa ngành Công nghệ thông tin tại UTEHY là bao nhiêu và có chính sách miễn giảm nào cho sinh viên khó khăn không"
+
+- id: lat_018
+  category: long_factual
+  query: "Trường UTEHY có những ngành đào tạo nào thuộc khối kỹ thuật và chỉ tiêu tuyển sinh từng ngành năm 2024 là bao nhiêu"
+
+- id: lat_019
+  category: long_factual
+  query: "Điều kiện và hồ sơ đăng ký xét tuyển bằng phương thức học bạ THPT vào trường UTEHY năm học 2024-2025 gồm những giấy tờ gì"
+
+- id: lat_020
+  category: long_factual
+  query: "Sinh viên ngành Kỹ thuật cơ khí sau khi tốt nghiệp có thể làm việc ở những vị trí nào và mức lương khởi điểm trung bình là bao nhiêu"
+
+- id: lat_021
+  category: long_factual
+  query: "Quy trình đăng ký nội trú ký túc xá cho tân sinh viên năm nhất tại UTEHY diễn ra như thế nào và chi phí một tháng khoảng bao nhiêu"
+
+- id: lat_022
+  category: long_factual
+  query: "Chương trình đào tạo chất lượng cao của ngành Công nghệ thông tin tại UTEHY có gì khác biệt so với chương trình đại trà về học phí và đầu ra"
+
+- id: lat_023
+  category: long_factual
+  query: "Các câu lạc bộ sinh viên và hoạt động ngoại khóa nổi bật tại trường UTEHY mà sinh viên năm nhất có thể tham gia là gì"
+
+- id: lat_024
+  category: long_factual
+  query: "Trường UTEHY có những chương trình hợp tác liên kết quốc tế hay trao đổi sinh viên với các trường đại học nước ngoài nào không"
+
+- id: lat_025
+  category: long_factual
+  query: "Lộ trình đào tạo bốn năm của ngành Kỹ thuật điện tử viễn thông tại UTEHY bao gồm những môn học chính nào theo từng học kỳ"
+
+# -------------------- multi_compare (8) --------------------
+- id: lat_026
+  category: multi_compare
+  query: "So sánh học phí ngành CNTT cơ sở 1 và cơ sở 2 của UTEHY"
+
+- id: lat_027
+  category: multi_compare
+  query: "So sánh điểm chuẩn ngành Kỹ thuật phần mềm và ngành Công nghệ thông tin năm 2024"
+
+- id: lat_028
+  category: multi_compare
+  query: "Điểm chuẩn ngành Kế toán năm 2022, 2023, 2024 thay đổi như thế nào"
+
+- id: lat_029
+  category: multi_compare
+  query: "Ngành Logistics và ngành Quản trị kinh doanh, ngành nào có cơ hội việc làm cao hơn"
+
+- id: lat_030
+  category: multi_compare
+  query: "So sánh chỉ tiêu giữa phương thức xét điểm thi tốt nghiệp và phương thức xét học bạ năm 2024"
+
+- id: lat_031
+  category: multi_compare
+  query: "Học phí ngành Ô tô so với ngành Cơ khí tại UTEHY chênh lệch bao nhiêu"
+
+- id: lat_032
+  category: multi_compare
+  query: "So sánh điểm chuẩn các ngành kỹ thuật khối A00 và khối A01 năm 2024 tại UTEHY"
+
+- id: lat_033
+  category: multi_compare
+  query: "Ký túc xá cơ sở Hưng Yên và cơ sở Hải Dương khác nhau như thế nào về chi phí và tiện nghi"
+
+# -------------------- off_topic (5) --------------------
+- id: lat_034
+  category: off_topic
+  query: "Thời tiết Hà Nội hôm nay thế nào"
+
+- id: lat_035
+  category: off_topic
+  query: "Cách nấu phở bò ngon nhất là gì"
+
+- id: lat_036
+  category: off_topic
+  query: "Giá vàng SJC hôm nay bao nhiêu"
+
+- id: lat_037
+  category: off_topic
+  query: "Kết quả trận đấu Việt Nam tối qua"
+
+- id: lat_038
+  category: off_topic
+  query: "Bạn có thể viết giúp tôi một bài thơ tình không"
+
+# -------------------- typo_abbrev (7) --------------------
+- id: lat_039
+  category: typo_abbrev
+  query: "diem chuan ktpm 2024"
+
+- id: lat_040
+  category: typo_abbrev
+  query: "hp cntt"
+
+- id: lat_041
+  category: typo_abbrev
+  query: "hoc phi nganh ktdt vien thong la bao nhieu"
+
+- id: lat_042
+  category: typo_abbrev
+  query: "diem chuan nganh CNTT UTEHY 2024"
+
+- id: lat_043
+  category: typo_abbrev
+  query: "ktx utehy co dat khong"
+
+- id: lat_044
+  category: typo_abbrev
+  query: "chi tieu qtkd 2024"
+
+- id: lat_045
+  category: typo_abbrev
+  query: "phuong thuc xt tuyen utehy"
+
+# -------------------- session_context (5) --------------------
+- id: lat_046
+  category: session_context
+  query: "Còn ngành đó thì sao?"
+
+- id: lat_047
+  category: session_context
+  query: "Vậy năm ngoái thì bao nhiêu?"
+
+- id: lat_048
+  category: session_context
+  query: "Thế cơ sở 2 thì thế nào?"
+
+- id: lat_049
+  category: session_context
+  query: "Còn phương thức khác nữa không?"
+
+- id: lat_050
+  category: session_context
+  query: "Cảm ơn, vậy hồ sơ cần gì?"

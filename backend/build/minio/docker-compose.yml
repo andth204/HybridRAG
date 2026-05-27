@@ -10,8 +10,8 @@ services:
       MINIO_NOTIFY_KAFKA_BROKERS_PRIMARY: "kafka:29092"
       MINIO_NOTIFY_KAFKA_TOPIC_PRIMARY: "${INDEXING_INPUT_TOPIC}"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9010:9000"
+      - "9011:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
