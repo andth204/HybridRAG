@@ -43,20 +43,9 @@ function handleKeydown(event: KeyboardEvent) {
       </div>
 
       <div class="input-bottom">
-        <div class="input-tools">
-          <button class="tool-btn" type="button">
-            <span class="material-icons-outlined">travel_explore</span>
-            Deep Search
-          </button>
-          <button class="tool-btn" type="button">
-            <span class="material-icons-outlined">mic</span>
-            Voice
-          </button>
-        </div>
+        <div class="input-tools"></div>
         <span class="char-count">{{ charCount }}</span>
       </div>
     </div>
-
-    <p class="footer-note">UTEHY Admissions Assistant • v0.1.1</p>
   </div>
 </template>

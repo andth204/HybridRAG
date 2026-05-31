@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch, watchEffect } from 'vue'
+import { computed, watch, watchEffect } from 'vue'
 import ChatView from '@/components/chat/ChatView.vue'
 import DocumentsView from '@/components/documents/DocumentsView.vue'
 import HistoryView from '@/components/chat/HistoryView.vue'
@@ -41,10 +41,6 @@ watchEffect(() => {
   }
 })
 
-onMounted(() => {
-  uiStore.setRightPanelCollapsed(false)
-})
-
 function resetSessionScopedStores() {
   chatStore.resetConversation()
   historyStore.reset()
@@ -72,9 +68,6 @@ watch(
       return
     }
     resetSessionScopedStores()
-    if (userId) {
-      uiStore.setRightPanelCollapsed(false)
-    }
   },
   { immediate: true },
 )

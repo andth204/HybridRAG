@@ -103,7 +103,10 @@ async function deleteRecentChat(sessionId: string) {
           @click="openChat(item)"
         >
           <span v-if="isCollapsed" class="project-mini-icon material-icons-outlined">chat_bubble_outline</span>
-          <span v-else class="project-name">{{ getPrimaryQuestion(item) }}</span>
+          <template v-else>
+            <span class="project-card-icon"><span class="material-icons-outlined">chat_bubble_outline</span></span>
+            <span class="project-name">{{ getPrimaryQuestion(item) }}</span>
+          </template>
         </button>
 
         <div v-if="!isCollapsed" class="project-card-actions" @click.stop>

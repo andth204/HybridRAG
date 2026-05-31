@@ -1,57 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  --font-ui: "Be Vietnam Pro", "Rubik", sans-serif;
-  --bg: #f5f5f7;
-  --surface: #fff;
-  --surface2: #f0f0f5;
-  --surface3: #e8e8f0;
-  --border: #e4e4ec;
-  --text: #0f0f14;
-  --text2: #6b6b80;
-  --text3: #a0a0b8;
-  --accent: #3b5bdb;
-  --accent-light: #eef2ff;
-  --accent-glow: rgba(59, 91, 219, 0.15);
-  --amber: #f59f00;
-  --amber-bg: #fff8e6;
-  --blue: #228be6;
-  --blue-bg: #e8f4fd;
-  --green: #37b24d;
-  --green-bg: #ebfbee;
-  --purple: #7048e8;
-  --purple-bg: #f3f0ff;
-  --red: #e03131;
-  --red-bg: #fff5f5;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.1);
-  --radius: 12px;
+  --font-ui: "Be Vietnam Pro", "Rubik", system-ui, sans-serif;
+  --font-display: "Lora", "Be Vietnam Pro", Georgia, serif;
+
+  --bg: #f4f8f6;
+  --surface: #ffffff;
+  --surface2: #eef3f0;
+  --surface3: #e3ebe6;
+  --border: #e1e9e4;
+  --text: #122019;
+  --text2: #56685e;
+  --text3: #93a39a;
+
+  --accent: #0e9d67;
+  --accent-strong: #0b8456;
+  --accent-light: #e3f5ec;
+  --accent-glow: rgba(14, 157, 103, 0.16);
+
+  --gold: #d99a00;
+  --gold-bright: #f2b705;
+  --gold-bg: #fdf3d6;
+  --gold-glow: rgba(217, 154, 0, 0.2);
+
+  --amber: #d99a00;
+  --amber-bg: #fdf3d6;
+  --blue: #2d74b6;
+  --blue-bg: #e7f0f8;
+  --green: #0e9d67;
+  --green-bg: #e3f5ec;
+  --purple: #0e8e86;
+  --purple-bg: #e0f2f0;
+  --red: #c0392b;
+  --red-bg: #fbe9e7;
+
+  --shadow: 0 1px 2px rgba(16, 40, 30, 0.04), 0 8px 28px rgba(16, 40, 30, 0.06);
+  --shadow-lg: 0 14px 48px rgba(16, 40, 30, 0.12);
+  --shadow-gold: 0 8px 24px rgba(217, 154, 0, 0.2);
+  --radius: 14px;
+  --radius-lg: 20px;
 }
 
 .dark {
-  --bg: #0c0c10;
-  --surface: #14141c;
-  --surface2: #1c1c28;
-  --surface3: #24243a;
-  --border: #2a2a38;
-  --text: #f0f0f8;
-  --text2: #8888a8;
-  --text3: #55556a;
-  --accent: #4c6ef5;
-  --accent-light: #1a1f3a;
-  --accent-glow: rgba(76, 110, 245, 0.2);
-  --amber: #fab005;
-  --amber-bg: #2a2010;
-  --blue: #339af0;
-  --blue-bg: #0d1e30;
-  --green: #51cf66;
-  --green-bg: #0d2015;
-  --purple: #845ef7;
-  --purple-bg: #1a1030;
+  --bg: #0c140f;
+  --surface: #121c16;
+  --surface2: #18241a;
+  --surface3: #21311f;
+  --border: #26362a;
+  --text: #e9f1ea;
+  --text2: #9cb0a1;
+  --text3: #61756a;
+
+  --accent: #34d399;
+  --accent-strong: #2bbe88;
+  --accent-light: #112a1e;
+  --accent-glow: rgba(52, 211, 153, 0.22);
+
+  --gold: #fbbf24;
+  --gold-bright: #fcd34d;
+  --gold-bg: #2a2310;
+  --gold-glow: rgba(251, 191, 36, 0.24);
+
+  --amber: #fbbf24;
+  --amber-bg: #2a2310;
+  --blue: #4da3e0;
+  --blue-bg: #0e2030;
+  --green: #34d399;
+  --green-bg: #112a1e;
+  --purple: #2dd4bf;
+  --purple-bg: #0c2420;
   --red: #ff6b6b;
-  --red-bg: #2a1010;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --red-bg: #2a1212;
+
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.4), 0 12px 36px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 18px 56px rgba(0, 0, 0, 0.6);
+  --shadow-gold: 0 8px 26px rgba(251, 191, 36, 0.18);
 }
 
 * {
@@ -1157,7 +1180,7 @@ select {
 }
 
 .right-panel.collapsed .panel-header {
-  padding: 14px 8px;
+  padding: 8px 6px 10px;
   justify-content: center;
   flex-direction: column;
 }
@@ -1213,8 +1236,9 @@ select {
 }
 
 .right-panel.collapsed .panel-menu {
-  width: 30px;
-  height: 30px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
 }
 
 .project-list {
@@ -1303,6 +1327,11 @@ select {
 .project-card-row {
   position: relative;
   width: 100%;
+}
+
+.project-card-row.compact {
+  display: flex;
+  justify-content: center;
 }
 
 .project-card-row:not(.compact) .project-card {
@@ -3646,4 +3675,225 @@ select {
   }
 }
 
+/* ===================================================================== */
+/* UTEHY Scholar — editorial-academic refinements (green + gold)         */
+/* ===================================================================== */
 
+/* — Background atmosphere: subtle brand glow + paper grain behind UI — */
+body {
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 78% at 100% 0%, var(--gold-glow) 0%, transparent 42%),
+    radial-gradient(96% 70% at 0% 100%, var(--accent-glow) 0%, transparent 48%);
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.app-shell,
+.login-page {
+  position: relative;
+  z-index: 1;
+}
+
+/* — Display typography (Lora serif) on the headings that carry weight — */
+.welcome-title,
+.docs-title,
+.stats-kpi-value,
+.login-left h1,
+.login-hero h2,
+.hist-empty-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.logo-name,
+.main-header-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Gradient-ink welcome headline (gold → green) for a memorable first beat */
+.welcome-title {
+  background: linear-gradient(118deg, var(--accent) 8%, var(--gold) 116%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--accent);
+  font-size: 34px;
+}
+
+/* Logo wordmark gets a hairline gold underline accent */
+.logo-name {
+  background: linear-gradient(transparent 78%, var(--gold-glow) 0);
+}
+
+/* — Kill the old purple gradient on avatars → brand green→gold — */
+.user-av-ph,
+.msg-av.usr {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--gold-bright) 100%);
+}
+
+/* — Component polish — */
+.msg-av.ai {
+  background: var(--accent-light);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.nav-item.active {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.input-box {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.input-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-lg);
+}
+.send-btn {
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+}
+.send-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-gold);
+}
+.action-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow);
+}
+/* AI answer bubble: faint paper tint + crisper edge */
+.msg:not(.user) .msg-bubble {
+  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--surface2) 40%, var(--surface)) 100%);
+}
+
+/* — Motion: one orchestrated reveal, gentle message entrance — */
+@keyframes ux-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.msg {
+  animation: ux-rise 0.34s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.welcome-title { animation: ux-rise 0.5s ease both; }
+.welcome-sub   { animation: ux-rise 0.5s 0.06s ease both; }
+.action-grid   { animation: ux-rise 0.5s 0.12s ease both; }
+.action-card   { animation: ux-rise 0.46s ease both; }
+.action-card:nth-child(2) { animation-delay: 0.05s; }
+.action-card:nth-child(3) { animation-delay: 0.10s; }
+.action-card:nth-child(4) { animation-delay: 0.15s; }
+
+/* — Login: replace the off-brand monstera with a branded gradient hero — */
+.login-right {
+  border: none;
+  background: #0c140f;
+}
+.login-hero {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: linear-gradient(150deg, #1c7a4b 0%, #15613b 48%, #0e3f28 100%);
+}
+.login-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(58% 48% at 80% 14%, rgba(242, 183, 5, 0.46), transparent 60%),
+    radial-gradient(54% 50% at 12% 90%, rgba(52, 211, 153, 0.34), transparent 62%),
+    repeating-radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 28px);
+}
+.login-hero-content {
+  position: relative;
+  text-align: center;
+  color: #fff;
+  padding: 40px;
+  max-width: 440px;
+}
+.login-hero-logo {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  margin: 0 auto 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 26px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
+}
+.login-hero-badge {
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 0.78rem;
+  letter-spacing: 0.4px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(4px);
+}
+.login-hero h2 {
+  font-size: 1.7rem;
+  line-height: 1.34;
+  margin-bottom: 12px;
+}
+.login-hero p {
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+/* — Respect reduced-motion — */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* — Right-panel history items: leading icon so names line up with the
+     "New Chat" row above instead of hugging the far-left edge — */
+.project-card-row:not(.compact) .project-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+}
+.project-card-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--surface2);
+  color: var(--text3);
+}
+.project-card-icon .material-icons-outlined {
+  font-size: 17px;
+}
+.project-card:hover .project-card-icon {
+  color: var(--text2);
+}
+.project-card.active .project-card-icon {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.project-card .project-name {
+  flex: 1;
+  min-width: 0;
+}

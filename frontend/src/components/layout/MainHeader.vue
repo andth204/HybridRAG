@@ -129,10 +129,6 @@ watch(
       <button class="btn-icon-r" type="button" aria-label="Open settings" @click="openSettings">
         <span class="material-icons-outlined">settings</span>
       </button>
-      <button class="btn-upgrade" type="button">
-        <span class="material-icons-outlined">bolt</span>
-        Upgrade
-      </button>
     </div>
   </header>
 </template>

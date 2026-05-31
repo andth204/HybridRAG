@@ -147,6 +147,7 @@ Start infrastructure and ingestion service:
 docker compose --env-file .env -f build/kafka/docker-compose.yml up -d
 docker compose --env-file .env -f build/postgres/docker-compose.yml up -d
 docker compose --env-file .env -f build/minio/docker-compose.yml up -d
+docker compose --env-file .env -f docker-compose.weaviate.yml up -d
 docker compose --env-file .env -f src/hybridrag/ingestion/ingestion_service/docker-compose.yml up -d --build
 ```
 
@@ -154,6 +155,12 @@ Start API container only:
 
 ```powershell
 docker compose --env-file .env -f docker-compose.api.yml up -d --build
+```
+
+Apply database migrations (Postgres init creates base tables only; this adds `admission_scores`, `chat_session_state`, `chat_feedback`, `chat_cost_log`, `chat_session_summary`):
+
+```powershell
+docker compose --env-file .env -f docker-compose.api.yml exec api python -m scripts.apply_migrations
 ```
 
 Follow API logs:
@@ -176,7 +183,7 @@ docker ps
 
 Access URLs:
 
-- Swagger UI: `http://localhost:8000/docs`
-- Liveness: `http://localhost:8000/api/v1/health/live`
-- Readiness: `http://localhost:8000/api/v1/health/ready`
-- MinIO Console: `http://localhost:9001`
+- Swagger UI: `http://localhost:8001/docs`
+- Liveness: `http://localhost:8001/api/v1/health/live`
+- Readiness: `http://localhost:8001/api/v1/health/ready`
+- MinIO Console: `http://localhost:9011`

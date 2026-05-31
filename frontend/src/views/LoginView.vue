@@ -25,7 +25,6 @@ async function handleGoogleLoginWithIdToken(idToken: string) {
     }
 
     uiStore.switchMainView('chat')
-    uiStore.setRightPanelCollapsed(false)
     await router.push('/workspace')
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Google sign-in failed.'
@@ -73,9 +72,9 @@ onMounted(() => {
   <div class="login-page">
     <div class="login-shell">
       <section class="login-left">
-        <h1>Welcome back</h1>
+        <h1>Chào mừng trở lại</h1>
         <p class="login-subtitle">
-          Continue with your Google account to access the university assistant.
+          Đăng nhập bằng tài khoản Google để hỏi Trợ lý Tuyển sinh UTEHY.
         </p>
 
         <div class="login-form">
@@ -88,10 +87,14 @@ onMounted(() => {
       </section>
 
       <section class="login-right">
-        <img src="/monstera.jpg" alt="Monstera plant" />
-        <div class="login-image-overlay">
-          <span>University Workspace</span>
-          <h2>Sign in to ask about the university.</h2>
+        <div class="login-hero">
+          <div class="login-hero-bg" />
+          <div class="login-hero-content">
+            <img class="login-hero-logo" src="/logoUtehy.png" alt="UTEHY" />
+            <span class="login-hero-badge">Trợ lý Tuyển sinh</span>
+            <h2>Hỏi đáp tuyển sinh Đại học Sư phạm Kỹ thuật Hưng Yên</h2>
+            <p>Điểm chuẩn · Học phí · Ngành đào tạo · Hồ sơ &amp; thủ tục xét tuyển</p>
+          </div>
         </div>
       </section>
     </div>

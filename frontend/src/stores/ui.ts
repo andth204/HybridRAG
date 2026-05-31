@@ -18,7 +18,7 @@ export const useUiStore = defineStore('ui', {
     theme: 'light' as ThemeMode,
     mainView: 'chat' as MainView,
     isSidebarCollapsed: false,
-    isRightPanelCollapsed: false,
+    isRightPanelCollapsed: true,
     language: 'auto' as AppLanguage,
     speechLanguage: 'auto' as SpeechLanguage,
     preferredVoice: '',
@@ -33,8 +33,9 @@ export const useUiStore = defineStore('ui', {
       const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null
       this.setTheme(savedTheme === 'dark' ? 'dark' : 'light')
       this.isSidebarCollapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'
-      const savedRightPanel = localStorage.getItem(RIGHT_PANEL_STORAGE_KEY)
-      this.isRightPanelCollapsed = savedRightPanel === null ? false : savedRightPanel === '1'
+      // Right panel (chat history) always starts collapsed on app open;
+      // it only expands when the user clicks the history toggle.
+      this.isRightPanelCollapsed = true
 
       const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY)
       this.language = savedLanguage?.trim() ? savedLanguage : 'auto'
