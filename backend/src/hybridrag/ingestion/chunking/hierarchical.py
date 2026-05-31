@@ -172,7 +172,7 @@ class HierarchicalSplitter:
         child_overlap: int = 60,
         encoding_name: str = "cl100k_base",
         headers_to_split_on: list[tuple[str, str]] | None = None,
-        route_tables_to_row_chunks: bool = False,
+        route_tables_to_row_chunks: bool = True,
     ) -> None:
         self.parent_size = parent_size
         self.child_size = child_size

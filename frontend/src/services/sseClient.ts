@@ -27,7 +27,20 @@ function handleMessage(event: EventSourceMessage, handlers: ChatStreamHandlers) 
   }
 
   if (event.event === 'token') {
-    handlers.onToken?.(event.data)
+    // Backend emits ``{"text": "..."}`` per token chunk. Without parsing
+    // we'd dump the raw JSON string into the chat bubble.
+    const parsed = safeParseJson(event.data)
+    if (typeof parsed === 'string') {
+      handlers.onToken?.(parsed)
+      return
+    }
+    if (typeof parsed === 'object' && parsed) {
+      const payload = parsed as Record<string, unknown>
+      if (typeof payload.text === 'string') {
+        handlers.onToken?.(payload.text)
+        return
+      }
+    }
     return
   }
 

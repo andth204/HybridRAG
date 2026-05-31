@@ -1,0 +1,37 @@
+# Docker-only dependency list — torch is provided by the
+# pytorch/pytorch:2.6.0-cuda12.4 base image so we skip it here to save
+# ~2.5 GB on every build. Local-dev installs should still use
+# requirements.api.txt (which pins torch explicitly).
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+
+openai==1.59.3
+numpy==1.26.4
+faiss-cpu==1.9.0.post1
+weaviate-client>=4.9,<5
+tiktoken==0.8.0
+cachetools==5.5.0
+# torch provided by base image
+transformers==4.49.0
+
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.17
+
+requests==2.32.3
+psycopg2-binary==2.9.11
+minio==7.2.18
+aioboto3
+tenacity
+confluent-kafka
+einops
+
+# Phase 2 chunking + entity resolution
+langchain-text-splitters>=0.3.0,<2
+rapidfuzz>=3.10
+pyyaml>=6.0
+
+# Phase 6 ops
+prometheus-client>=0.20
+redis>=5.0

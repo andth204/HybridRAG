@@ -56,6 +56,13 @@ class SlotValue:
     (year as ``int``). ``display`` is the user-facing label injected
     back into rewrites/answers. ``set_at`` is an ISO-8601 UTC timestamp
     so the column round-trips cleanly through ``json.dumps``.
+
+    ``mention_count`` was added in v3.5: it tracks how many times the
+    user has referenced this canonical value. Slots with ``mention_count
+    >= 2`` survive the regular age-based decay because two mentions are
+    a much stronger signal that the entity is the conversational focus,
+    not a passing reference. New rows default to ``1`` so legacy state
+    that lacks the field is treated as a single mention.
     """
 
     value: Any
@@ -63,6 +70,7 @@ class SlotValue:
     set_at: Optional[str] = None
     confidence: float = 1.0
     turn: int = 0
+    mention_count: int = 1
 
     def to_jsonable(self) -> dict[str, Any]:
         """Project this entry into a plain dict suitable for ``psycopg2.extras.Json``."""
@@ -72,6 +80,7 @@ class SlotValue:
             "set_at": self.set_at,
             "confidence": float(self.confidence),
             "turn": int(self.turn),
+            "mention_count": int(self.mention_count),
         }
 
     @classmethod
@@ -92,6 +101,7 @@ class SlotValue:
             set_at=data.get("set_at"),
             confidence=float(data.get("confidence", 1.0)),
             turn=int(data.get("turn", 0)),
+            mention_count=int(data.get("mention_count", 1)),
         )
 
 
@@ -100,13 +110,26 @@ class SlotValue:
 # -------------------------------------------------------------------- #
 @dataclass
 class SessionState:
-    """In-memory view of one row of ``chat_session_state``."""
+    """In-memory view of one row of ``chat_session_state``.
+
+    v3.5 adds the three summary fields. ``conversation_summary`` is a
+    rolling LLM-generated digest of the user/assistant turns older than
+    the rewriter's window, so the answer-compose prompt can still see
+    long-session context without re-feeding raw history every turn.
+    ``summary_turn_count`` records the turn index at which the summary
+    was last refreshed; the dialogue manager uses it to decide whether
+    a refresh is due (every ``SUMMARY_REFRESH_EVERY`` turns after the
+    ``SUMMARY_TRIGGER_TURN`` threshold).
+    """
 
     session_id: str
     slots: dict[str, SlotValue] = field(default_factory=dict)
     last_intent: Optional[str] = None
     last_query: Optional[str] = None
     updated_at: Optional[datetime] = None
+    conversation_summary: Optional[str] = None
+    summary_updated_at: Optional[datetime] = None
+    summary_turn_count: int = 0
 
     def slots_jsonable(self) -> dict[str, dict[str, Any]]:
         """Serialize the slot map for storage."""
@@ -150,6 +173,9 @@ class SessionStateRepo:
             last_intent=row.get("last_intent"),
             last_query=row.get("last_query"),
             updated_at=row.get("updated_at"),
+            conversation_summary=row.get("conversation_summary"),
+            summary_updated_at=row.get("summary_updated_at"),
+            summary_turn_count=int(row.get("summary_turn_count") or 0),
         )
 
     # ------------------------------------------------------------------ #
@@ -164,7 +190,8 @@ class SessionStateRepo:
         create the row.
         """
         sql = """
-        SELECT session_id, slots, last_intent, last_query, updated_at
+        SELECT session_id, slots, last_intent, last_query, updated_at,
+               conversation_summary, summary_updated_at, summary_turn_count
         FROM chat_session_state
         WHERE session_id = %s
         """
@@ -173,6 +200,36 @@ class SessionStateRepo:
                 cur.execute(sql, (session_id,))
                 row = cur.fetchone()
         return self._row_to_state(session_id, row)
+
+    def update_summary(
+        self,
+        session_id: str,
+        *,
+        summary: str,
+        turn_count: int,
+    ) -> None:
+        """Persist a freshly generated conversation summary.
+
+        Creates the row if missing (empty slot map) so the summary can
+        outlive a slot-less session. Idempotent on the (session_id) key
+        thanks to ON CONFLICT DO UPDATE.
+        """
+        sql = """
+        INSERT INTO chat_session_state (
+            session_id, slots, conversation_summary,
+            summary_updated_at, summary_turn_count, updated_at
+        )
+        VALUES (%s, '{}'::jsonb, %s, NOW(), %s, NOW())
+        ON CONFLICT (session_id) DO UPDATE SET
+            conversation_summary = EXCLUDED.conversation_summary,
+            summary_updated_at   = NOW(),
+            summary_turn_count   = EXCLUDED.summary_turn_count,
+            updated_at           = NOW()
+        """
+        with borrow(self.dsn) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (session_id, summary, int(turn_count)))
+            conn.commit()
 
     # ------------------------------------------------------------------ #
     # Writes

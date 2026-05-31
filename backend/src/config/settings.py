@@ -24,14 +24,14 @@ class Settings(BaseSettings):
     AUTH_TOKEN_SCHEMA: str = "public"
     AUTH_TOKEN_TABLE: str = "auth_tokens"
 
-    # -----< OpenAI & LLM >----- 
+    # -----< OpenAI & LLM >-----
     OPENAI_API_KEY:       str   = ""
     GENERATE_MODEL:       str   = "gpt-4o-mini"
     EMBEDDING_MODEL:      str   = "text-embedding-3-small"
     EMBEDDING_DIMENSION:  int   = 1536
     TEMPERATURE_MAIN:     float = 0.6
     TEMPERATURE_CHITCHAT: float = 0.8
-    MAX_GEN_MAIN:         int   = 500
+    MAX_GEN_MAIN:         int   = 1200
     MAX_GEN_CHITCHAT:     int   = 100
 
     # -----< Chunking >-----
@@ -54,9 +54,8 @@ class Settings(BaseSettings):
     RETRIEVAL_BACKEND: str = "hybrid_legacy"   # "hybrid_legacy" | "weaviate"
     INGEST_PIPELINE:   str = "flat_legacy"     # "flat_legacy" | "hierarchical_weaviate"
     # Phase 4D tool-call layer (admission_scores / tuition KG).
-    # Off: all retrieval intents route to RAG; no extra LLM round-trip,
-    # no Postgres lookups via tool. Keep off until KG tables populated.
-    KG_ENABLED:        bool = False
+    # v3.5: ON — KG tables populated 2026-05-30 (154 rows across 3 years).
+    KG_ENABLED:        bool = True
 
     # -----< Human handoff (admissions advisor contact) >-----
     HUMAN_HANDOFF_ENABLED:    bool = True
@@ -101,15 +100,48 @@ class Settings(BaseSettings):
     HYDE_TIMEOUT:     float  = 6.0
 
     # -----< Query Rewriting >-----
-    MAX_HISTORY_TOKENS_REWRITE: int = 250
+    # v3.5: K_REWRITE 3→6, MAX_HISTORY_TOKENS 250→600, TIMEOUT 2→4 — gives
+    # multi-turn coreference resolution more context + budget.
+    MAX_HISTORY_TOKENS_REWRITE: int = 600
     TEMPERATURE_REWRITER:     float = 0.2
-    K_REWRITE:                  int = 3
+    K_REWRITE:                  int = 6
     REWRITER_MODEL:             str = "gpt-4o-mini"
-    REWRITER_TIMEOUT:         float = 2
+    REWRITER_TIMEOUT:         float = 4
     MAX_REWRITE_OUTPUT_TOKENS:  int = 100
     MAX_HISTORY_CHARS_REWRITE:  int = 1200
     REWRITER_CACHE_SIZE:        int = 512
     REWRITER_CACHE_TTL_SECONDS: int = 86400
+    # v3.5: skip rewriter when intent is confident AND query has no pronoun.
+    # Saves 600-1500 ms on the critical TTFB path. Heuristic is conservative;
+    # disable with REWRITE_SKIP_IF_CONFIDENT=False if multi-turn accuracy drops.
+    REWRITE_SKIP_IF_CONFIDENT:      bool  = True
+    REWRITE_SKIP_INTENT_THRESHOLD: float = 0.6
+
+    # -----< v3.5 dialogue / retrieval tuning >-----
+    # Slot frame decay: how many turns a slot stays valid before it's dropped.
+    # 6 → 12 because admissions sessions routinely run 8-15 turns and the
+    # rewriter cannot resolve "ngành đó" once the slot has decayed.
+    SLOT_DECAY_TURNS: int = 12
+
+    # Hard threshold gate: when the KG returns nothing AND the top reranked
+    # doc's score falls below this, short-circuit to handoff instead of
+    # generating a junk answer.
+    RETRIEVAL_THRESHOLD_HANDOFF: float = 0.30
+
+    # Exact-match answer cache (in-process TTLCache, no Redis required).
+    # Key: md5(intent + slot_canonicals + normalized_query + kg_version_hash).
+    # Invalidates automatically when KG content changes via the version hash.
+    ANSWER_CACHE_ENABLED: bool = True
+    ANSWER_CACHE_TTL_SEC: int  = 86400
+    ANSWER_CACHE_MAXSIZE: int  = 1024
+
+    # Conversation summary — only kicks in for long sessions to avoid LLM
+    # cost on the common short-session path.
+    SUMMARY_ENABLED:      bool = True
+    SUMMARY_TRIGGER_TURN: int  = 12
+    SUMMARY_REFRESH_EVERY: int = 4
+    SUMMARY_MODEL:        str  = "gpt-4o-mini"
+    SUMMARY_MAX_TOKENS:   int  = 200
 
     # -----< Runtime warm-up >-----
     WARMUP_QUERIES_ENABLED:    bool = True

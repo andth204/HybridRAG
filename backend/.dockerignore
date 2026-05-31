@@ -1,0 +1,47 @@
+# Speed up `docker build` context upload by excluding heavy / unneeded paths.
+# Keep this list aligned with backend/ root contents.
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+*.egg-info/
+build/
+
+# Local data + vector stores — re-ingest happens inside the container
+data/vector_store/
+data/samples/.cache/
+
+# Eval artifacts (large JSON)
+data/eval/*_results_*.json
+data/eval/baselines/
+
+# Editor / OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local env (mounted at runtime, not baked in)
+.env.local
+.env.dev.local
+.env.prod.local
+
+# Docs / images
+docs/
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/

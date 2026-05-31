@@ -2,6 +2,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import threading
+import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, AsyncIterator, Union
@@ -67,14 +69,63 @@ def get_weaviate_searcher() -> WeaviateHybridSearcher:
     return searcher
 
 
+# v3.5: cached Weaviate-health flag. Weaviate is the primary backend now;
+# when its health probe fails we transparently fall back to the FAISS+BM25
+# searcher so a single Weaviate outage doesn't kill the chat endpoint.
+# Probe TTL is 30 s — long enough to keep the per-request cost negligible,
+# short enough to recover quickly once Weaviate comes back.
+_BACKEND_HEALTH_TTL_SEC: float = 30.0
+_health_lock = threading.Lock()
+_weaviate_last_probe_ts: float = 0.0
+_weaviate_healthy: bool = True
+
+
+def _probe_weaviate_health() -> bool:
+    """Cheap liveness probe for the Weaviate-backed searcher.
+
+    Returns ``True`` when the underlying ``WeaviateStore.health_check()``
+    reports OK. Cached via :data:`_BACKEND_HEALTH_TTL_SEC` so a stream of
+    chat requests doesn't slam the Weaviate REST endpoint.
+    """
+    global _weaviate_last_probe_ts, _weaviate_healthy
+    with _health_lock:
+        now = time.time()
+        if (now - _weaviate_last_probe_ts) < _BACKEND_HEALTH_TTL_SEC:
+            return _weaviate_healthy
+        _weaviate_last_probe_ts = now
+        try:
+            searcher = get_weaviate_searcher()
+            searcher.load_indexes()
+            store = getattr(searcher, "_store", None)
+            if store is None or not hasattr(store, "health_check"):
+                _weaviate_healthy = False
+            else:
+                report = store.health_check()
+                _weaviate_healthy = bool(report.get("ok"))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Weaviate health probe raised (%s); marking unhealthy", exc)
+            _weaviate_healthy = False
+        return _weaviate_healthy
+
+
 def get_active_searcher() -> Union[HybridSearcher, WeaviateHybridSearcher]:
     """Return whichever retrieval backend is active per
-    ``settings.RETRIEVAL_BACKEND``. Default (``"hybrid_legacy"``) returns
-    the legacy FAISS+BM25 searcher so production behaviour is unchanged.
+    ``settings.RETRIEVAL_BACKEND``.
+
+    v3.5: when ``RETRIEVAL_BACKEND="weaviate"`` is configured but a health
+    probe fails, we transparently fall back to the legacy FAISS+BM25
+    searcher so a Weaviate outage doesn't bring the chat endpoint down.
+    The fallback is logged at WARNING level so it shows up in the boot
+    diagnostic and per-request traces.
     """
     backend = str(getattr(settings, "RETRIEVAL_BACKEND", "hybrid_legacy")).strip().lower()
     if backend == "weaviate":
-        return get_weaviate_searcher()
+        if _probe_weaviate_health():
+            return get_weaviate_searcher()
+        log.warning(
+            "Weaviate health probe failed — falling back to FAISS+BM25 searcher"
+        )
+        return get_hybrid_searcher()
     return get_hybrid_searcher()
 
 
@@ -155,15 +206,40 @@ def get_slot_filler() -> SlotFiller:
 # metadata).
 # -------------------------------------------------------------------- #
 SYSTEM_PROMPT_TOOL_CALL = (
-    "You are a Vietnamese admissions advisor for Hung Yen University "
-    "of Technology and Education. When the user asks for specific "
-    "numbers (admission scores / tuition / list of majors), CALL THE "
-    "MATCHING TOOL instead of guessing. After the tool returns, "
-    "combine its data with any retrieval context to write a clear, "
-    "natural Vietnamese answer. If the tool returns an empty result, "
-    "refuse honestly (e.g. 'Tôi chưa có dữ liệu điểm chuẩn của ...'). "
-    "Cite source file names from CONTEXT in a final "
-    "[Thong tin tham chieu] section when factual claims come from RAG."
+    "Bạn là chuyên viên tư vấn tuyển sinh tiếng Việt của Trường Đại học "
+    "Sư phạm Kỹ thuật Hưng Yên (UTEHY).\n\n"
+    "QUY TẮC TOOL CALL — BẮT BUỘC TUÂN THỦ:\n"
+    "1. Khi người dùng hỏi điểm chuẩn / học phí / danh sách ngành, "
+    "BẮT BUỘC gọi tool tương ứng với đầy đủ tham số (major, year, "
+    "method nếu có trong câu hỏi). KHÔNG được đoán mò.\n"
+    "2. Khi tool trả về `data` là MẢNG CÓ DỮ LIỆU: dữ liệu đó là "
+    "NGUỒN SỰ THẬT DUY NHẤT. PHẢI dùng nguyên các con số, năm, "
+    "phương thức TRONG mảng `data`. TUYỆT ĐỐI KHÔNG được nói "
+    "\"chưa có dữ liệu\" khi tool đã trả về row khớp năm/ngành "
+    "được hỏi.\n"
+    "2a. MAP phương thức tiếng Việt sang `method` code khi gọi tool:\n"
+    "  - \"thi tốt nghiệp\" / \"điểm thi tốt nghiệp\" / \"thi THPT\" → method=\"THPT\"\n"
+    "  - \"học bạ\" / \"xét học bạ\" / \"điểm học bạ\" / \"XHCT\" → method=\"XHCT\"\n"
+    "  - \"ĐGNL\" / \"ĐGTD\" / \"đánh giá năng lực\" / \"HSA\" → method=\"HSA\"\n"
+    "  Bỏ trống `method` chỉ khi người dùng KHÔNG nhắc phương thức.\n"
+    "3. Khi tool trả `data=[]` (mảng rỗng) HOẶC `error`: "
+    "PHẢI nói thẳng \"Tôi chưa có dữ liệu ... cho năm/ngành đó\" "
+    "+ gợi ý dữ liệu năm khác nếu có trong context. KHÔNG được "
+    "vớ số từ context RAG để ghép vào câu hỏi mà tool đã trả "
+    "trống — đó là bịa.\n"
+    "4. Khớp year chặt chẽ: nếu người dùng hỏi năm 2025 và tool "
+    "trả row có year=2024, PHẢI nói rõ \"chưa có 2025, dữ liệu "
+    "gần nhất là 2024: ...\". KHÔNG được trình bày 2024 như là "
+    "2025.\n"
+    "5. Khi có Slot context (vd `major=CNTT`), DÙNG slot đó làm "
+    "tham số mặc định cho tool nếu người dùng không nói rõ ngành "
+    "trong lượt hiện tại.\n"
+    "6. Sau khi tool trả về, viết câu trả lời tiếng Việt ngắn gọn "
+    "(tối đa 6 câu), kèm trích dẫn nguồn từ tool (tên file source) "
+    "trong khối cuối:\n"
+    "[Thông tin tham chiếu]\n"
+    "[1]. <source_file của row đầu tiên trong tool result>\n\n"
+    "7. KHÔNG dùng emoji. KHÔNG bịa hotline/email/địa chỉ."
 )
 
 
@@ -453,6 +529,46 @@ async def _prewarm_embedding_cache(
     await vector_searcher._embed(queries)
 
 
+async def _prewarm_full_pipeline(
+    searcher: Union[HybridSearcher, WeaviateHybridSearcher],
+    queries: list[str],
+) -> None:
+    """Trigger one full retrieve + rerank + semantic-intent cycle.
+
+    Cold-start on the first chat request after boot was measured at
+    ~14 s vs ~2 s warm. The slow paths are:
+      * Weaviate gRPC handshake on the first ``store.search`` call
+      * BGE reranker first inference (CUDA stream setup, kernel
+        autotune on the new input shape)
+      * SemanticIntentClassifier embedding the query through OpenAI
+        for the first time
+
+    We exercise all three in the background here so the first real
+    request lands on a hot pipeline.
+    """
+    if not queries:
+        return
+    sample = queries[0]
+
+    # 1) Retrieve + rerank trip (warms Weaviate gRPC + reranker
+    #    inference path on GPU).
+    try:
+        if isinstance(searcher, WeaviateHybridSearcher):
+            await searcher.search(query=sample, top_k=3, use_reranker=True)
+        else:
+            await searcher.search(query=sample, vector_k=5, bm25_k=5, fusion_top_n=5)
+    except Exception as exc:  # noqa: BLE001 - best effort
+        log.warning("Pipeline pre-warm: search trip failed (%s)", exc)
+
+    # 2) Semantic intent classifier (forces the prototype pkl load +
+    #    one OpenAI embedding call).
+    try:
+        router = get_intent_router()
+        await router.classify(sample)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Pipeline pre-warm: intent classify failed (%s)", exc)
+
+
 def warm_up_runtime() -> None:
     # Warm up whichever retrieval backend is active.
     searcher = get_active_searcher()
@@ -508,10 +624,19 @@ def warm_up_runtime() -> None:
         queries = _load_warmup_queries()
         if not queries:
             return
+
+        async def _do_all_warmups() -> None:
+            await _prewarm_embedding_cache(searcher, queries)
+            await _prewarm_full_pipeline(searcher, queries)
+
         # warm_up_runtime() is called from a worker thread via asyncio.to_thread,
         # so the current thread has no running event loop -> asyncio.run is safe.
-        asyncio.run(_prewarm_embedding_cache(searcher, queries))
-        log.info("Pre-warmed embedding cache with %d queries", len(queries))
+        asyncio.run(_do_all_warmups())
+        log.info(
+            "Pre-warmed embedding cache + full retrieval/intent pipeline "
+            "with %d queries",
+            len(queries),
+        )
     except Exception as exc:
         # Pre-warm is best-effort - never block startup on it.
         log.warning("Embedding pre-warm failed (non-fatal): %s", exc)

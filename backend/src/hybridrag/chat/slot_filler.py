@@ -35,6 +35,7 @@ import unicodedata
 from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
+from src.config.settings import settings
 from src.hybridrag.chat.session_state import (
     SessionState,
     SessionStateRepo,
@@ -56,6 +57,12 @@ _ENTITY_SLOTS: tuple[tuple[str, str], ...] = (
     ("faculty", "faculty"),
     ("doc_type", "doc_type"),
 )
+
+
+# v3.5: a slot with mention_count >= this many references survives age-based
+# decay. Two is the smallest value that still distinguishes "casual one-off
+# mention" from "the user keeps coming back to this entity".
+STICKY_MENTION_THRESHOLD: int = 2
 
 
 def _utc_now_iso() -> str:
@@ -95,7 +102,10 @@ class SlotFiller:
     * Reset phrases (Vietnamese + English) live in ``RESET_PHRASES``.
     """
 
-    DEFAULT_DECAY_TURNS: int = 6
+    # v3.5: bumped 6 → 12. Admissions sessions routinely run 8-15 turns, and
+    # the rewriter cannot resolve "ngành đó" / "ở đó" once the slot has decayed.
+    # Override via settings.SLOT_DECAY_TURNS.
+    DEFAULT_DECAY_TURNS: int = 12
 
     # Lower-cased + accent-stripped phrases that trigger a full slot reset.
     # We match by accent-stripped substring so users with broken IME can
@@ -115,12 +125,16 @@ class SlotFiller:
         self,
         repo: SessionStateRepo | None = None,
         *,
-        decay_turns: int = DEFAULT_DECAY_TURNS,
+        decay_turns: int | None = None,
     ) -> None:
         self.repo = repo or SessionStateRepo()
         # Always >= 1 turn so a value extracted this turn never decays
-        # immediately because of a misconfigured 0.
-        self.decay_turns = max(1, int(decay_turns))
+        # immediately because of a misconfigured 0. Pull from settings so
+        # ops can tune without a deploy.
+        configured = decay_turns if decay_turns is not None else getattr(
+            settings, "SLOT_DECAY_TURNS", self.DEFAULT_DECAY_TURNS
+        )
+        self.decay_turns = max(1, int(configured))
 
     # ------------------------------------------------------------------ #
     # Public API
@@ -192,7 +206,29 @@ class SlotFiller:
             return self.repo.get(session_id)
 
         new_slots = self.extract_slots(query, turn_index=turn_index)
-        decayed = self._decay(state.slots, turn_index=turn_index)
+        # v3.5: sticky-aware merge. If the user re-mentions the SAME
+        # canonical value we previously had for a slot, we bump
+        # ``mention_count`` on the new entry — that's what makes the
+        # slot survive the next age-based decay. Crossing the threshold
+        # of >=2 mentions converts a one-off reference into a sticky
+        # pin (see ``_decay``). If the user mentions a DIFFERENT value
+        # for the slot, mention_count resets to 1 (new entity, new
+        # focus).
+        prior_slots = state.slots or {}
+        for name, new_sv in list(new_slots.items()):
+            prior = prior_slots.get(name)
+            if prior is not None and prior.value == new_sv.value:
+                bumped = int(getattr(prior, "mention_count", 1) or 1) + 1
+                new_slots[name] = SlotValue(
+                    value=new_sv.value,
+                    display=new_sv.display,
+                    set_at=new_sv.set_at,
+                    confidence=new_sv.confidence,
+                    turn=new_sv.turn,
+                    mention_count=bumped,
+                )
+
+        decayed = self._decay(prior_slots, turn_index=turn_index)
         # New wins on key collision — last extraction is most recent
         # signal from the user.
         merged: dict[str, SlotValue] = {**decayed, **new_slots}
@@ -241,6 +277,14 @@ class SlotFiller:
     ) -> dict[str, SlotValue]:
         """Drop slots whose ``turn`` field is older than ``decay_turns`` behind.
 
+        v3.5 sticky carve-out: a slot whose ``mention_count`` is at
+        least :data:`STICKY_MENTION_THRESHOLD` survives the age check.
+        Two-or-more mentions is the signal that the user is focused on
+        that entity for the rest of the conversation, even if there's a
+        long pause before they reference it again ("còn ngành đó học phí
+        thế nào" sau 15 turn vẫn resolve về CNTT khi user đã nhắc CNTT
+        từ turn 1 và turn 4).
+
         Edge case: legacy rows / corrupted JSON may lack a ``turn``
         field (defaults to ``0`` via :meth:`SlotValue.from_jsonable`).
         We treat that as "ancient" and let it decay naturally — this
@@ -251,6 +295,11 @@ class SlotFiller:
         for name, sv in slots.items():
             slot_turn = int(sv.turn or 0)
             age = turn_index - slot_turn
+            mentions = int(getattr(sv, "mention_count", 1) or 1)
+            if mentions >= STICKY_MENTION_THRESHOLD:
+                # Sticky pin — keep regardless of age.
+                out[name] = sv
+                continue
             if age <= self.decay_turns:
                 out[name] = sv
         return out

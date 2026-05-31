@@ -1,10 +1,36 @@
-FROM python:3.11-slim
-WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu124
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-ENV PIP_USE_DEPRECATED=legacy-resolver
+# syntax=docker/dockerfile:1.4
+#
+# HybridRAG API image — built on PyTorch CUDA base so we don't pay the
+# 2.5 GB torch wheel download on every build. BuildKit pip cache mount
+# keeps subsequent builds at ~2 min instead of 15 min when only app
+# code or non-torch deps change.
+#
+# Build:
+#   DOCKER_BUILDKIT=1 docker build -f backend/Dockerfile.api -t hybridrag-api ./backend
+#
+# Run:
+#   docker run --gpus all -p 8001:8001 --env-file backend/.env hybridrag-api
 
-COPY requirements.api.txt ./
-RUN pip install --no-cache-dir -r requirements.api.txt
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install requirements with BuildKit cache mount — subsequent builds
+# reuse downloaded wheels in /root/.cache/pip across runs.
+# Uses the trimmed Docker-only list (skips torch — base image provides).
+COPY requirements.api.docker.txt ./
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.api.docker.txt
+
+# App code last so a code-only change rebuilds in seconds.
+COPY src ./src
+COPY scripts ./scripts
+COPY data/dict ./data/dict
+COPY data/eval ./data/eval
+
+EXPOSE 8001
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8001"]

@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import datetime
 from typing import Any, Literal
@@ -20,6 +21,7 @@ from src.api.core.runtime import (
     stream_chitchat_answer,
 )
 from src.config.settings import settings
+from src.hybridrag.chat import summary as conversation_summary
 from src.hybridrag.chat.clarifier import ClarificationRequest
 from src.hybridrag.chat.feedback import ChatFeedbackRepo, FeedbackRecord
 from src.hybridrag.chat.message import ChatMessage, ChatMessageRepo
@@ -32,6 +34,7 @@ from src.hybridrag.chat.handoff import build_handoff_payload, should_handoff
 from src.hybridrag.retrieval.hybrid import HybridSearcher
 from src.hybridrag.rewriter import query_reflection
 from src.hybridrag.router.intents import DEFAULT_INTENT, Intent
+from src.hybridrag.utils import answer_cache
 from src.hybridrag.utils.pii_scrub import scrub, scrub_dict
 
 log = logging.getLogger(__name__)
@@ -155,6 +158,52 @@ async def _cancel_task_silent(task: asyncio.Task | None) -> None:
         pass
 
 
+# v3.5: keep strong refs to background tasks so the event loop doesn't GC
+# them before they finish (asyncio.create_task only holds a weak ref).
+_BACKGROUND_TASKS: set[asyncio.Task[Any]] = set()
+
+
+def _spawn_background(coro: Any) -> asyncio.Task[Any]:
+    """Schedule ``coro`` on the running loop without awaiting it.
+
+    Used for post-response side effects like the rolling conversation
+    summary refresh: the user already has their answer, the summarizer
+    runs in the background while the next request starts up.
+    """
+    task = asyncio.create_task(coro)
+    _BACKGROUND_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
+    return task
+
+
+def _maybe_schedule_summary_refresh(
+    session_id: str,
+    session_state: SessionState | None,
+    chat_history: list[dict[str, str]],
+    turn_index: int,
+) -> None:
+    """Kick off an async summary refresh if this turn warrants one.
+
+    No-op when ``session_state`` is None or the summary trigger
+    conditions aren't met (short session / no recent change). The
+    actual gating lives inside ``conversation_summary.refresh_if_due``.
+    """
+    if session_state is None or not chat_history:
+        return
+    if not getattr(settings, "SUMMARY_ENABLED", False):
+        return
+    repo = get_slot_filler().repo
+    _spawn_background(
+        conversation_summary.refresh_if_due(
+            session_id=session_id,
+            state=session_state,
+            history=chat_history,
+            current_turn=turn_index,
+            repo=repo,
+        )
+    )
+
+
 class CreateSessionRequest(BaseModel):
     title: str | None = Field(default=None, max_length=500)
 
@@ -233,6 +282,22 @@ def _message_to_response(message: ChatMessage) -> ChatMessageResponse:
     )
 
 
+# v3.5: strip the trailing "[Thông tin tham chiếu]" reference block from
+# assistant turns before feeding them into the rewriter. The block is
+# frontend rendering metadata, not conversation content — keeping it in
+# history wastes the rewriter's MAX_HISTORY_TOKENS budget and crowds out
+# the user turns that actually carry coreference targets.
+_REF_BLOCK_RE = re.compile(
+    r"\n\s*\[\s*Th[ôo]ng\s+tin\s+tham\s+chi[ếe]u\s*\][\s\S]*$",
+    flags=re.IGNORECASE,
+)
+
+
+def _strip_reference_block(content: str) -> str:
+    """Drop the trailing reference block from an assistant message body."""
+    return _REF_BLOCK_RE.sub("", content).rstrip()
+
+
 def _to_rewriter_history(messages: list[ChatMessage]) -> list[dict[str, str]]:
     history: list[dict[str, str]] = []
     for message in messages:
@@ -241,8 +306,159 @@ def _to_rewriter_history(messages: list[ChatMessage]) -> list[dict[str, str]]:
             continue
         if message.role not in {"user", "assistant"}:
             continue
+        if message.role == "assistant":
+            content = _strip_reference_block(content)
+            if not content:
+                continue
         history.append({"role": message.role, "content": content})
     return history
+
+
+# v3.5: cheap heuristic to skip the rewriter LLM call on the critical TTFB
+# path. Demonstrative / anaphoric pronouns in Vietnamese are the strongest
+# signal that the current query relies on coreference and therefore NEEDS
+# the rewriter to resolve "ngành đó" / "ở đây" / "năm ấy" etc.
+_PRONOUN_RE = re.compile(
+    r"\b(đó|đấy|kia|này|ấy|vậy|nó|ổng|bả|đây)\b",
+    flags=re.IGNORECASE,
+)
+
+
+# Post-stress-test fix (2026-05-31): catch elliptical follow-up queries
+# that depend on the prior turn's entity even when they contain no
+# demonstrative pronoun. Examples:
+#   "Còn năm 2024 thì sao?"   → depends on previous major slot
+#   "Thế còn KTPM?"           → introduces new entity but inherits intent
+#   "Và học phí?"             → inherits the just-discussed major
+#   "Tiếp theo là gì?"        → inherits context entirely
+# These queries MUST go through the rewriter so it can resolve the
+# implicit reference; otherwise the tool path receives ambiguous args.
+_ELLIPTICAL_RE = re.compile(
+    r"^\s*(còn|thế\s+còn|vậy\s+còn|và|thế|vậy|tiếp(?:\s+theo)?|thêm)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _has_pronoun(text: str) -> bool:
+    """True if the text contains a Vietnamese demonstrative pronoun.
+
+    Operates on the raw user query (post-coref-expansion) — slot-filler's
+    ``expand_coreference`` will have already substituted any pronoun whose
+    slot is bound, so a surviving pronoun here means the rewriter LLM is
+    still the only way to resolve it.
+    """
+    return bool(_PRONOUN_RE.search(text or ""))
+
+
+def _is_elliptical(text: str) -> bool:
+    """True if the text begins with an elliptical marker.
+
+    Elliptical queries inherit subject/intent from the previous turn but
+    don't carry a demonstrative — without the rewriter they confuse the
+    tool path. We treat any leading "Còn / Thế còn / Vậy còn / Và / Thế /
+    Vậy / Tiếp / Thêm" as a hard "do not skip rewriter" signal.
+    """
+    return bool(_ELLIPTICAL_RE.match(text or ""))
+
+
+def _pre_generate_handoff_gate(
+    intent: str,
+    retrieved_docs: list[dict[str, Any]],
+) -> str | None:
+    """v3.5 hard threshold gate — short-circuit BEFORE the compose LLM call.
+
+    Trigger handoff when the retrieval signal is so weak that generating
+    an answer would only produce a junk / hallucinated response. We skip
+    the gate for intents that have a structured KG tool registered
+    (``score_lookup`` / ``tuition_lookup`` / ``program_info`` /
+    ``compare``) because the tool path may still produce a valid answer
+    from Postgres even when the doc retrieval is sparse.
+
+    Returns one of:
+      * ``"no_docs"``      — retrieval returned empty
+      * ``"low_recall"``   — top doc score below ``RETRIEVAL_THRESHOLD_HANDOFF``
+      * ``None``           — proceed with normal generation
+    """
+    if not settings.HUMAN_HANDOFF_ENABLED:
+        return None
+    if intent == Intent.CHITCHAT.value:
+        return None
+    if intent in INTENT_TO_TOOLS:
+        return None
+    if not retrieved_docs:
+        return "no_docs"
+
+    threshold = float(getattr(settings, "RETRIEVAL_THRESHOLD_HANDOFF", 0.30))
+    top = retrieved_docs[0]
+    score: float | None = None
+    for key in ("rerank_score", "rrf_score", "vector_score", "score"):
+        value = top.get(key)
+        if isinstance(value, (int, float)):
+            score = float(value)
+            break
+    if score is None:
+        # Backend didn't surface a comparable score (e.g. Weaviate hybrid
+        # alpha results); trust the LLM to do the gating downstream.
+        return None
+    if score < threshold:
+        return "low_recall"
+    return None
+
+
+def _render_handoff_answer(handoff_payload: dict[str, Any]) -> str:
+    """Render the handoff payload into a Vietnamese fallback answer body."""
+    contact = handoff_payload.get("contact") or {}
+    lines = [handoff_payload.get("message") or ""]
+    if contact.get("hotline"):
+        lines.append(f"- Hotline: {contact['hotline']}")
+    if contact.get("phone"):
+        lines.append(f"- Văn phòng: {contact['phone']}")
+    if contact.get("email"):
+        lines.append(f"- Email: {contact['email']}")
+    if contact.get("fanpage"):
+        lines.append(f"- Fanpage: {contact['fanpage']}")
+    if contact.get("office_hours"):
+        lines.append(f"- Giờ làm việc: {contact['office_hours']}")
+    return "\n".join(line for line in lines if line)
+
+
+def _should_skip_rewriter(
+    expanded_query: str,
+    chat_history: list[dict[str, str]],
+) -> bool:
+    """Decide whether the rewriter LLM call can be skipped this turn.
+
+    Skip when ALL of:
+      * ``settings.REWRITE_SKIP_IF_CONFIDENT`` is on (default True).
+      * The query has no surviving coreference pronoun (post-slot-coref).
+      * The cheap keyword intent classifier scores at or above
+        ``settings.REWRITE_SKIP_INTENT_THRESHOLD`` — confident match means
+        the user typed a self-contained question.
+
+    Returns ``True`` to short-circuit ``query_reflection.reflect()``.
+    """
+    if not getattr(settings, "REWRITE_SKIP_IF_CONFIDENT", False):
+        return False
+    if _has_pronoun(expanded_query):
+        return False
+    if _is_elliptical(expanded_query) and chat_history:
+        # Elliptical follow-up ("Còn năm 2024 thì sao?") inherits context
+        # from the prior turn; the rewriter must inline the inherited
+        # entity before we can run the tool path.
+        return False
+    if not chat_history:
+        # No history → reflect() would early-return anyway, but skip the
+        # function call entirely so the audit trail shows it.
+        return True
+    try:
+        intent_router = get_intent_router()
+        # Reach into the keyword side directly — the semantic fallback is
+        # async and might trigger an embed call; we want this to be cheap.
+        kw_result = intent_router._kw.classify(expanded_query)
+    except Exception:  # noqa: BLE001 — never block the request on a peek
+        return False
+    threshold = float(getattr(settings, "REWRITE_SKIP_INTENT_THRESHOLD", 0.6))
+    return kw_result.score >= threshold
 
 
 def _sse(event: str, payload: dict[str, Any]) -> str:
@@ -687,8 +903,16 @@ async def chat_answer(
     )
 
     rewrite_t0 = time.perf_counter()
-    rewritten_query = await query_reflection.reflect(expanded_query, chat_history)
-    rewrite_ms = (time.perf_counter() - rewrite_t0) * 1000
+    if _should_skip_rewriter(expanded_query, chat_history):
+        rewritten_query = expanded_query
+        rewrite_ms = (time.perf_counter() - rewrite_t0) * 1000
+        log.debug(
+            "rewriter skipped (confident intent + no pronoun) for session=%s",
+            session.id,
+        )
+    else:
+        rewritten_query = await query_reflection.reflect(expanded_query, chat_history)
+        rewrite_ms = (time.perf_counter() - rewrite_t0) * 1000
 
     # Phase 4A: intent classification on the rewritten query.
     route_t0 = time.perf_counter()
@@ -698,6 +922,68 @@ async def chat_answer(
     intent_score = float(intent_result.score)
     route_name = _intent_to_legacy_route(intent_str)
     route_ms = (time.perf_counter() - route_t0) * 1000
+
+    # v3.5: exact-match answer cache. Lookup BEFORE retrieval so a hit
+    # skips the entire retrieve+rerank+compose path. Chitchat is too
+    # variable to cache — skip it.
+    cached_envelope: dict[str, Any] | None = None
+    if intent_str != Intent.CHITCHAT.value:
+        cached_envelope = answer_cache.lookup(
+            intent_str,
+            _flat_slot_values(session_state),
+            rewritten_query,
+        )
+
+    if cached_envelope is not None:
+        await _cancel_task_silent(raw_retrieval_task)
+        raw_retrieval_task = None
+        answer_text = _normalize_answer_text(cached_envelope.get("answer", ""))
+        sources = list(cached_envelope.get("sources") or [])
+        cached_meta = dict(cached_envelope.get("metadata") or {})
+        cache_metadata: dict[str, Any] = {
+            "type": "answer",
+            "route": route_name,
+            "pipeline": "api.chat.answer",
+            "search_mode": search_mode,
+            "rewrite_ms": round(rewrite_ms, 2),
+            "route_ms": round(route_ms, 2),
+            "search_ms": 0.0,
+            "generate_ms": 0.0,
+            "intent": intent_str,
+            "intent_score": round(intent_score, 4),
+            "slots_snapshot": _serialise_slots(session_state),
+            "n_retrieved": 0,
+            "sources": sources,
+            "cache_hit": True,
+            "original_metadata": cached_meta,
+        }
+        await asyncio.to_thread(
+            message_repo.create,
+            session.id,
+            "assistant",
+            answer_text,
+            metadata=cache_metadata,
+        )
+        await asyncio.to_thread(session_repo.touch, session.id)
+        await _safe_session_touch(
+            session.id, last_intent=intent_str, last_query=rewritten_query
+        )
+        return ChatAnswerResponse(
+            session_id=session.id,
+            question=question,
+            search_mode=search_mode,
+            rewritten_query=rewritten_query,
+            route_name=route_name,
+            route_score=intent_score,
+            answer=answer_text,
+            retrieved_count=0,
+            sources=sources,
+            intent=intent_str,
+            intent_score=intent_score,
+            clarification=None,
+            slots_snapshot=_serialise_slots(session_state),
+            tool_calls=None,
+        )
 
     # Phase 4C: clarification gate. We peek at retrieval BEFORE the
     # expensive generation call so the clarifier can use a top-doc score
@@ -737,6 +1023,61 @@ async def chat_answer(
                 rewritten_query, search_mode, filters=None
             )
         search_ms = (time.perf_counter() - search_t0) * 1000
+
+        # v3.5 pre-generation handoff gate: if retrieval is too weak AND
+        # the intent has no KG tool fallback, short-circuit BEFORE the
+        # compose LLM call. Saves cost + latency on hopeless queries and
+        # avoids hallucinating an answer from irrelevant context.
+        gate_reason = _pre_generate_handoff_gate(intent_str, retrieved_docs)
+        if gate_reason is not None:
+            handoff_payload = build_handoff_payload(gate_reason)
+            answer_text = _render_handoff_answer(handoff_payload)
+            generate_ms = (time.perf_counter() - generate_t0) * 1000
+            sources = compact_sources(retrieved_docs)
+            metadata: dict[str, Any] = {
+                "type": "answer",
+                "route": route_name,
+                "pipeline": "api.chat.answer",
+                "search_mode": search_mode,
+                "rewrite_ms": round(rewrite_ms, 2),
+                "route_ms": round(route_ms, 2),
+                "search_ms": round(search_ms, 2),
+                "generate_ms": round(generate_ms, 2),
+                "intent": intent_str,
+                "intent_score": round(intent_score, 4),
+                "slots_snapshot": _serialise_slots(session_state),
+                "n_retrieved": len(retrieved_docs),
+                "sources": sources,
+                "handoff": handoff_payload,
+                "gate_triggered": gate_reason,
+            }
+            await asyncio.to_thread(
+                message_repo.create,
+                session.id,
+                "assistant",
+                answer_text,
+                metadata=metadata,
+            )
+            await asyncio.to_thread(session_repo.touch, session.id)
+            await _safe_session_touch(
+                session.id, last_intent=intent_str, last_query=rewritten_query
+            )
+            return ChatAnswerResponse(
+                session_id=session.id,
+                question=question,
+                search_mode=search_mode,
+                rewritten_query=rewritten_query,
+                route_name=route_name,
+                route_score=intent_score,
+                answer=answer_text,
+                retrieved_count=len(retrieved_docs),
+                sources=sources,
+                intent=intent_str,
+                intent_score=intent_score,
+                clarification=None,
+                slots_snapshot=_serialise_slots(session_state),
+                tool_calls=None,
+            )
 
         # Now ask the clarifier whether we should short-circuit.
         clarifier = get_clarifier()
@@ -872,6 +1213,31 @@ async def chat_answer(
     generate_ms = (time.perf_counter() - generate_t0) * 1000
     sources = compact_sources(retrieved_docs)
 
+    # v3.5: cache the answer envelope when it's safe to replay. Skip
+    # chitchat (too variable), skip handoff (we want fresh retrieval on
+    # the next attempt), skip refusal (verifier flagged the answer
+    # itself as a refusal sentence). The cache key includes the KG
+    # version digest so re-running the extractor naturally invalidates
+    # stale answers.
+    _cache_safe = (
+        route_name != "chitchat"
+        and handoff_payload is None
+        and (verification_summary or {}).get("overall") != "refusal"
+        and bool(retrieved_docs)
+    )
+    if _cache_safe:
+        answer_cache.store(
+            intent_str,
+            _flat_slot_values(session_state),
+            rewritten_query,
+            answer=answer_text,
+            sources=sources,
+            metadata={
+                "kg_used": bool(tool_call_log),
+                "intent_score": round(intent_score, 4),
+            },
+        )
+
     metadata = {
         "type": "answer",
         "route": route_name,
@@ -906,6 +1272,10 @@ async def chat_answer(
     await asyncio.to_thread(session_repo.touch, session.id)
     await _safe_session_touch(
         session.id, last_intent=intent_str, last_query=rewritten_query
+    )
+    # v3.5: fire-and-forget summary refresh for long sessions.
+    _maybe_schedule_summary_refresh(
+        session.id, session_state, chat_history, turn_index
     )
 
     return ChatAnswerResponse(
@@ -1017,9 +1387,16 @@ async def chat_answer_stream(
                 )
             )
 
-            # Stage 1: rewriting
-            yield _sse("status", {"stage": "rewriting"})
-            rewritten_query = await query_reflection.reflect(expanded_query, chat_history)
+            # Stage 1: rewriting (skipped when intent is confident + no pronoun)
+            if _should_skip_rewriter(expanded_query, chat_history):
+                rewritten_query = expanded_query
+                yield _sse(
+                    "status",
+                    {"stage": "rewriting", "skipped": True},
+                )
+            else:
+                yield _sse("status", {"stage": "rewriting"})
+                rewritten_query = await query_reflection.reflect(expanded_query, chat_history)
 
             # Stage 2: intent classification
             intent_router = get_intent_router()
@@ -1044,6 +1421,75 @@ async def chat_answer_stream(
                     "route_name": route_name,
                 },
             )
+
+            # v3.5: exact-match answer cache. Lookup BEFORE retrieval to
+            # skip retrieve+rerank+compose entirely on a hit. Chitchat
+            # bypasses (responses are intentionally variable).
+            cached_envelope = None
+            if intent_str != Intent.CHITCHAT.value:
+                cached_envelope = answer_cache.lookup(
+                    intent_str,
+                    _flat_slot_values(session_state),
+                    rewritten_query,
+                )
+            if cached_envelope is not None:
+                await _cancel_task_silent(raw_retrieval_task)
+                raw_retrieval_task = None
+                cached_text = _normalize_answer_text(
+                    cached_envelope.get("answer", "")
+                )
+                cached_sources = list(cached_envelope.get("sources") or [])
+                cached_safe_sources = _safe_sources_for_sse(cached_sources)
+                yield _sse(
+                    "status",
+                    {"stage": "cache_hit", "sources": cached_safe_sources},
+                )
+                yield _sse("token", {"text": cached_text})
+                cache_meta: dict[str, Any] = {
+                    "type": "answer",
+                    "route": route_name,
+                    "pipeline": "api.chat.answer.stream",
+                    "search_mode": search_mode,
+                    "intent": intent_str,
+                    "intent_score": round(intent_score, 4),
+                    "slots_snapshot": slots_snapshot,
+                    "n_retrieved": 0,
+                    "sources": cached_sources,
+                    "cache_hit": True,
+                    "original_metadata": dict(
+                        cached_envelope.get("metadata") or {}
+                    ),
+                }
+                stored_cached = await asyncio.to_thread(
+                    message_repo.create,
+                    session.id,
+                    "assistant",
+                    cached_text,
+                    metadata=cache_meta,
+                )
+                await asyncio.to_thread(session_repo.touch, session.id)
+                await _safe_session_touch(
+                    session.id,
+                    last_intent=intent_str,
+                    last_query=rewritten_query,
+                )
+                yield _sse(
+                    "done",
+                    {
+                        "session_id": session.id,
+                        "route_name": route_name,
+                        "search_mode": search_mode,
+                        "answer": cached_text,
+                        "sources": cached_safe_sources,
+                        "answer_id": getattr(stored_cached, "id", None),
+                        "route": route_name,
+                        "intent": intent_str,
+                        "intent_score": intent_score,
+                        "slots_snapshot": slots_snapshot,
+                        "metadata": cache_meta,
+                    },
+                )
+                return
 
             if route_name == "chitchat":
                 # Cancel speculative retrieval before announcing next stage to
@@ -1078,6 +1524,57 @@ async def chat_answer_stream(
             # Defense-in-depth: any '<'/'>' inside source labels must not
             # reach the SSE wire un-escaped (frontend XSS guard).
             safe_sources = _safe_sources_for_sse(sources)
+
+            # v3.5 pre-generation handoff gate (same logic as the non-stream path).
+            gate_reason = _pre_generate_handoff_gate(intent_str, retrieved_docs)
+            if gate_reason is not None:
+                gate_payload = build_handoff_payload(gate_reason)
+                gate_text = _render_handoff_answer(gate_payload)
+                yield _sse("handoff", gate_payload)
+                yield _sse("token", {"text": gate_text})
+                gate_metadata: dict[str, Any] = {
+                    "type": "answer",
+                    "route": route_name,
+                    "pipeline": "api.chat.answer.stream",
+                    "search_mode": search_mode,
+                    "n_retrieved": len(retrieved_docs),
+                    "sources": sources,
+                    "intent": intent_str,
+                    "intent_score": round(intent_score, 4),
+                    "slots_snapshot": slots_snapshot,
+                    "handoff": gate_payload,
+                    "gate_triggered": gate_reason,
+                }
+                stored_gate = await asyncio.to_thread(
+                    message_repo.create,
+                    session.id,
+                    "assistant",
+                    gate_text,
+                    metadata=gate_metadata,
+                )
+                await asyncio.to_thread(session_repo.touch, session.id)
+                await _safe_session_touch(
+                    session.id,
+                    last_intent=intent_str,
+                    last_query=rewritten_query,
+                )
+                yield _sse(
+                    "done",
+                    {
+                        "session_id": session.id,
+                        "route_name": route_name,
+                        "search_mode": search_mode,
+                        "answer": gate_text,
+                        "sources": safe_sources,
+                        "answer_id": getattr(stored_gate, "id", None),
+                        "route": route_name,
+                        "intent": intent_str,
+                        "intent_score": intent_score,
+                        "slots_snapshot": slots_snapshot,
+                        "metadata": gate_metadata,
+                    },
+                )
+                return
 
             # Phase 4C: clarification gate (skipped on chitchat).
             if route_name != "chitchat":
@@ -1271,6 +1768,28 @@ async def chat_answer_stream(
                 metadata["verification"] = verification_summary
             if handoff_payload is not None:
                 metadata["handoff"] = handoff_payload
+
+            # v3.5: cache the answer envelope (same rules as the
+            # non-stream path — skip chitchat / handoff / refusal).
+            _cache_safe_stream = (
+                route_name != "chitchat"
+                and handoff_payload is None
+                and (verification_summary or {}).get("overall") != "refusal"
+                and bool(retrieved_docs)
+            )
+            if _cache_safe_stream and session_state is not None:
+                answer_cache.store(
+                    intent_str,
+                    _flat_slot_values(session_state),
+                    rewritten_query,
+                    answer=answer_text,
+                    sources=sources,
+                    metadata={
+                        "kg_used": bool(tool_call_log),
+                        "intent_score": round(intent_score, 4),
+                    },
+                )
+
             stored_assistant = await asyncio.to_thread(
                 message_repo.create,
                 session.id,
@@ -1281,6 +1800,10 @@ async def chat_answer_stream(
             await asyncio.to_thread(session_repo.touch, session.id)
             await _safe_session_touch(
                 session.id, last_intent=intent_str, last_query=rewritten_query
+            )
+            # v3.5: fire-and-forget summary refresh for long sessions.
+            _maybe_schedule_summary_refresh(
+                session.id, session_state, chat_history, turn_index
             )
             yield _sse(
                 "done",

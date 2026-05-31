@@ -38,8 +38,8 @@ OPENAI_TOOL_SCHEMAS: list[dict[str, Any]] = [
             "name": "lookup_score",
             "description": (
                 "Look up admission scores (điểm chuẩn) for a given major, "
-                "year, optionally filtered by campus or faculty. Use this "
-                "when the user asks for specific score numbers."
+                "year, method, optionally filtered by campus or faculty. "
+                "Use this when the user asks for specific score numbers."
             ),
             "parameters": {
                 "type": "object",
@@ -56,6 +56,20 @@ OPENAI_TOOL_SCHEMAS: list[dict[str, Any]] = [
                         "description": (
                             "4-digit year e.g. 2024. If omitted, latest "
                             "year is used."
+                        ),
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": ["THPT", "XHCT", "HSA"],
+                        "description": (
+                            "Admission method code. MAP from Vietnamese:\n"
+                            "- 'thi tốt nghiệp' / 'điểm thi tốt nghiệp' / "
+                            "'thi THPT' → 'THPT'\n"
+                            "- 'học bạ' / 'xét điểm học bạ' / 'XHCT' → 'XHCT'\n"
+                            "- 'ĐGNL' / 'ĐGTD' / 'đánh giá năng lực' / "
+                            "'HSA' → 'HSA'\n"
+                            "Omit only if the user did NOT mention a method "
+                            "(returns all methods)."
                         ),
                     },
                     "campus": {
